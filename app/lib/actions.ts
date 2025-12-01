@@ -7,6 +7,7 @@ import { AuthError } from 'next-auth'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { put } from '@vercel/blob'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {
@@ -82,11 +83,10 @@ export async function createCard(prevState: string | undefined, formData: FormDa
 
     let imagePath = null
     if (imageFile && imageFile.size > 0) {
-        // Convert to base64 for storage (Vercel doesn't have persistent file system)
-        const buffer = Buffer.from(await imageFile.arrayBuffer())
-        const base64 = buffer.toString('base64')
-        const mimeType = imageFile.type || 'image/jpeg'
-        imagePath = `data:${mimeType};base64,${base64}`
+        const blob = await put(imageFile.name, imageFile, {
+            access: 'public',
+        })
+        imagePath = blob.url
     }
 
     await prisma.card.create({

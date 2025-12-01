@@ -1,45 +1,55 @@
-# StoreCards
+# StoreCard App
 
-StoreCards is a modern, mobile-first web application for storing and displaying loyalty cards. It allows you to keep all your rewards cards in one place, accessible from any device.
-
-## Features
-
--   **📱 Mobile-First Design**: Optimized for phone screens to easily show barcodes at checkout.
--   **📷 Easy Scanning**: Add cards by scanning barcodes with your camera or uploading images.
--   **🏷️ Wide Format Support**: Supports codes like UPC, EAN, Code 128, QR Code, PDF417, and more.
--   **💡 Smart Display**: Full-screen barcode view for easy and reliable scanning.
+A Next.js application to manage your store cards.
 
 ## Tech Stack
 
--   **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
--   **Language**: TypeScript
--   **Styling**: Tailwind CSS
--   **Database**: SQLite (Local) / PostgreSQL (Production)
--   **ORM**: Prisma
--   **Auth**: NextAuth.js v5
+- **Framework**: Next.js 16
+- **Database**: PostgreSQL (Prisma)
+- **Auth**: NextAuth.js
+- **Storage**: Vercel Blob (for card images)
+- **Styling**: Tailwind CSS
 
-## Getting Started Locally
+## Local Development
 
-1.  **Clone the repository**:
+1.  **Install Dependencies**:
     ```bash
-    git clone https://github.com/admica/storecards.git
-    cd storecards
+    npm install
     ```
 
-2.  **Install**:
+2.  **Start Database**:
     ```bash
-    npm install --legacy-peer-deps
-    npx prisma db push
+    docker-compose up -d
     ```
 
-4.  **Run the development server**:
+3.  **Setup Environment**:
+    Create a `.env` file based on `.env.example`:
+    ```env
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/storecards?schema=public"
+    AUTH_SECRET="your-secret-key"
+    BLOB_READ_WRITE_TOKEN="your-vercel-blob-token"
+    ```
+
+4.  **Run Migrations**:
+    ```bash
+    npx prisma migrate dev
+    ```
+
+5.  **Start App**:
     ```bash
     npm run dev
     ```
 
-5.  **Open the app**:
-    Visit [http://localhost:3000](http://localhost:3000) in your browser.
+## Vercel Deployment
 
-## Deployment
-
-This app is optimized for deployment on [Vercel](https://vercel.com).
+1.  **Push to GitHub/GitLab/Bitbucket**.
+2.  **Import Project** in Vercel.
+3.  **Configure Storage**:
+    - Add a **Postgres** database (Vercel Postgres, Neon, etc.).
+    - Add **Vercel Blob** storage.
+4.  **Environment Variables**:
+    - `DATABASE_URL`: Connection string to your Postgres DB (pooled).
+    - `DIRECT_URL`: Connection string to your Postgres DB (non-pooled/direct).
+    - `AUTH_SECRET`: Generate one with `npx auth secret`.
+    - `BLOB_READ_WRITE_TOKEN`: Automatically added if you add Vercel Blob storage.
+5.  **Deploy**!

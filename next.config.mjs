@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
-    experimental: {
-        serverComponentsExternalPackages: ['@prisma/client'],  // For Prisma in server components
-    },
+
+    serverExternalPackages: ['@prisma/client'],
     output: 'standalone',  // Crucial for Vercel serverless (includes Prisma binaries)
     env: {
         // Expose env vars to browser if needed (e.g., NEXTAUTH_URL)
