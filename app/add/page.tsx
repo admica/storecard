@@ -24,7 +24,7 @@ export default function AddCardPage() {
             <div className="mx-auto max-w-md rounded-lg bg-white p-6 shadow-md">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-gray-900">Add New Card</h1>
-                    <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
+                    <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-500">
                         Cancel
                     </Link>
                 </div>

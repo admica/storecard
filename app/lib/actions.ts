@@ -104,8 +104,8 @@ export async function createCard(prevState: string | undefined, formData: FormDa
         },
     })
 
-    revalidatePath('/')
-    redirect('/')
+    revalidatePath('/dashboard')
+    redirect('/dashboard')
 }
 
 export async function deleteCard(id: string) {
@@ -119,6 +119,56 @@ export async function deleteCard(id: string) {
 
     if (card && card.user.email === session.user.email) {
         await prisma.card.delete({ where: { id } })
-        revalidatePath('/')
+        revalidatePath('/dashboard')
+        redirect('/dashboard')
     }
+}
+
+export async function updateCard(id: string, prevState: string | undefined, formData: FormData) {
+    const session = await auth()
+    if (!session?.user?.email) {
+        return 'Not authenticated'
+    }
+
+    const retailer = formData.get('retailer') as string
+    const note = formData.get('note') as string
+    const barcodeValue = formData.get('barcodeValue') as string
+    const barcodeFormat = formData.get('barcodeFormat') as string
+    const imageFile = formData.get('image') as File
+
+    if (!retailer) {
+        return 'Retailer name is required'
+    }
+
+    const existingCard = await prisma.card.findUnique({
+        where: { id },
+        include: { user: true }
+    })
+
+    if (!existingCard || existingCard.user.email !== session.user.email) {
+        return 'Card not found or unauthorized'
+    }
+
+    let imagePath = existingCard.image
+    if (imageFile && imageFile.size > 0) {
+        const blob = await put(imageFile.name, imageFile, {
+            access: 'public',
+        })
+        imagePath = blob.url
+    }
+
+    await prisma.card.update({
+        where: { id },
+        data: {
+            retailer,
+            note,
+            barcodeValue,
+            barcodeFormat,
+            image: imagePath,
+        },
+    })
+
+    revalidatePath('/dashboard')
+    revalidatePath(`/card/${id}`)
+    redirect(`/card/${id}`)
 }

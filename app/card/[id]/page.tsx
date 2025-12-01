@@ -23,15 +23,23 @@ export default async function CardPage({ params }: { params: { id: string } }) {
     return (
         <div className="flex min-h-screen flex-col bg-white">
             <header className="flex items-center justify-between bg-gray-50 px-4 py-4 shadow-sm">
-                <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <Link href="/dashboard" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     &larr; Back
                 </Link>
                 <h1 className="text-lg font-bold text-gray-900">{card.retailer}</h1>
-                <form action={deleteCard.bind(null, card.id)}>
-                    <button type="submit" className="text-sm text-red-600 hover:text-red-500">
-                        Delete
-                    </button>
-                </form>
+                <div className="flex space-x-4">
+                    <Link
+                        href={`/card/${card.id}/edit`}
+                        className="text-sm text-indigo-600 hover:text-indigo-500"
+                    >
+                        Edit
+                    </Link>
+                    <form action={deleteCard.bind(null, card.id)}>
+                        <button type="submit" className="text-sm text-red-600 hover:text-red-500">
+                            Delete
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <main className="flex flex-1 flex-col items-center justify-center p-4">
