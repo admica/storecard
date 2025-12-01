@@ -172,3 +172,22 @@ export async function updateCard(id: string, prevState: string | undefined, form
     revalidatePath(`/card/${id}`)
     redirect(`/card/${id}`)
 }
+
+export async function updateLastUsed(cardId: string) {
+    const session = await auth()
+    if (!session?.user?.email) return
+
+    const card = await prisma.card.findUnique({
+        where: { id: cardId },
+        include: { user: true }
+    })
+
+    if (card && card.user.email === session.user.email) {
+        await prisma.card.update({
+            where: { id: cardId },
+            data: { lastUsed: new Date() }
+        })
+        revalidatePath('/dashboard')
+    }
+}
+

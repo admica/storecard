@@ -3,6 +3,24 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
+function formatRelativeTime(date: Date | null): string {
+    if (!date) return 'Never used'
+
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+    return date.toLocaleDateString()
+}
+
 export default async function Dashboard() {
     const session = await auth()
     if (!session?.user?.email) {
@@ -16,7 +34,7 @@ export default async function Dashboard() {
             },
         },
         orderBy: {
-            createdAt: 'desc',
+            lastUsed: 'desc',
         },
     })
 
@@ -56,17 +74,47 @@ export default async function Dashboard() {
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {cards.map((card) => (
                                 <Link
                                     key={card.id}
                                     href={`/card/${card.id}`}
-                                    className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400"
+                                    className="group relative flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2"
                                 >
-                                    <div className="min-w-0 flex-1">
-                                        <span className="absolute inset-0" aria-hidden="true" />
-                                        <p className="text-sm font-medium text-gray-900">{card.retailer}</p>
-                                        <p className="truncate text-sm text-gray-500">{card.note}</p>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-lg font-semibold text-gray-900 truncate">
+                                                {card.retailer}
+                                            </p>
+                                            {card.note && (
+                                                <p className="mt-1 text-sm text-gray-500 truncate">
+                                                    {card.note}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {card.barcodeValue && (
+                                        <div className="mt-4 flex items-center gap-2 text-xs font-mono text-gray-600 bg-gray-50 rounded px-2 py-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                                            </svg>
+                                            <span className="truncate">
+                                                {card.barcodeValue.slice(0, 12)}...
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatRelativeTime(card.lastUsed)}
+                                        </span>
+                                        <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            View →
+                                        </span>
                                     </div>
                                 </Link>
                             ))}
