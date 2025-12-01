@@ -1,10 +1,12 @@
 import NextAuth from "next-auth"
+import { authConfig } from "./auth.config"
 import Credentials from "next-auth/providers/credentials"
+import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { z } from "zod"
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
+    ...authConfig,
     providers: [
         Credentials({
             credentials: {
@@ -28,25 +30,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
         }),
     ],
-    pages: {
-        signIn: '/login',
-    },
-    callbacks: {
-        authorized({ auth, request: { nextUrl } }) {
-            const isLoggedIn = !!auth?.user
-            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/add') || nextUrl.pathname.startsWith('/card')
-            const isPublic = nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register'
-
-            if (isOnDashboard) {
-                if (isLoggedIn) return true
-                return false // Redirect unauthenticated users to login page
-            } else if (isLoggedIn) {
-                // Redirect logged-in users away from public pages to dashboard
-                if (isPublic) {
-                    return Response.redirect(new URL('/dashboard', nextUrl))
-                }
-            }
-            return true
-        },
-    },
 })
