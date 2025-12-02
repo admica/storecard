@@ -48,12 +48,17 @@ export async function register(prevState: string | undefined, formData: FormData
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    await prisma.user.create({
-        data: {
-            email,
-            password: hashedPassword,
-        },
-    })
+    try {
+        await prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+            },
+        })
+    } catch (error) {
+        console.error('Registration error:', error)
+        return 'Failed to create user. ' + (error instanceof Error ? error.message : String(error))
+    }
 
     try {
         await signIn('credentials', formData)
