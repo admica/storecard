@@ -5,14 +5,15 @@ import Link from 'next/link'
 import { deleteCard } from '@/app/lib/actions'
 import CardView from './card-view'
 
-export default async function CardPage({ params }: { params: { id: string } }) {
+export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.email) {
         redirect('/login')
     }
 
     const card = await prisma.card.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: { user: true },
     })
 

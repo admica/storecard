@@ -88,10 +88,16 @@ export async function createCard(prevState: string | undefined, formData: FormDa
 
     let imagePath = null
     if (imageFile && imageFile.size > 0) {
-        const blob = await put(imageFile.name, imageFile, {
-            access: 'public',
-        })
-        imagePath = blob.url
+        try {
+            const blob = await put(imageFile.name, imageFile, {
+                access: 'public',
+            })
+            imagePath = blob.url
+        } catch (error) {
+            console.error('Image upload failed:', error)
+            // Continue without image rather than failing completely
+            // The card will be created without an image
+        }
     }
 
     await prisma.card.create({
@@ -156,10 +162,15 @@ export async function updateCard(id: string, prevState: string | undefined, form
 
     let imagePath = existingCard.image
     if (imageFile && imageFile.size > 0) {
-        const blob = await put(imageFile.name, imageFile, {
-            access: 'public',
-        })
-        imagePath = blob.url
+        try {
+            const blob = await put(imageFile.name, imageFile, {
+                access: 'public',
+            })
+            imagePath = blob.url
+        } catch (error) {
+            console.error('Image upload failed:', error)
+            // Keep existing image if new upload fails
+        }
     }
 
     await prisma.card.update({

@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import EditCardForm from './edit-form'
 
-export default async function EditCardPage({ params }: { params: { id: string } }) {
+export default async function EditCardPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
     const session = await auth()
     if (!session?.user?.email) {
         redirect('/login')
     }
 
     const card = await prisma.card.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: { user: true },
     })
 
