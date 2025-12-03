@@ -91,7 +91,6 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
     }
 
     return (
-    return (
         <>
             {/* Scanning Options */}
             <div className="mb-6 space-y-3">
