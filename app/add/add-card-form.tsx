@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useZxing } from 'react-zxing'
 
 import LogoPicker from '@/components/logo-picker'
+import { preprocessImage } from '@/app/lib/image-utils'
 
 export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
     const [errorMessage, dispatch] = useFormState(createCard, undefined)
@@ -53,19 +54,7 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
         return formatMap[format] || 'code128'
     }
 
-    // Helper to create image element from file
-    const createImageElement = (file: File): Promise<HTMLImageElement> => {
-        return new Promise((resolve, reject) => {
-            const img = new Image()
-            const url = URL.createObjectURL(file)
-            img.onload = () => {
-                URL.revokeObjectURL(url)
-                resolve(img)
-            }
-            img.onerror = reject
-            img.src = url
-        })
-    }
+
 
     // Handle image upload and barcode scanning
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,8 +72,8 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
         setScanStatus('scanning')
         try {
             const codeReader = new BrowserMultiFormatReader()
-            const result = await codeReader.decodeFromImageElement(
-                await createImageElement(file)
+            const result = await codeReader.decodeFromCanvas(
+                await preprocessImage(file)
             )
 
             // Success! Found a barcode
