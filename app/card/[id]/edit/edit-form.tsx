@@ -17,6 +17,7 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
     const [isScanning, setIsScanning] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle')
+    const [scanError, setScanError] = useState<string | null>(null)
     const [retailerName, setRetailerName] = useState(card.retailer || '')
     const [selectedLogo, setSelectedLogo] = useState<string | null>(card.logo || null)
     const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false)
@@ -75,6 +76,7 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
         } catch (error) {
             console.error('Barcode detection failed:', error)
             setScanStatus('error')
+            setScanError(error instanceof Error ? error.message : 'Unknown error')
             // User can still manually enter barcode
         }
     }
@@ -151,7 +153,8 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
 
             {scanStatus === 'error' && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                    <p className="text-sm text-yellow-700">⚠️ No barcode found in image. You can still enter it manually.</p>
+                    <p className="text-sm text-yellow-700">⚠️ No barcode detected. You can still enter it manually.</p>
+                    {scanError && <p className="text-xs text-yellow-600 mt-1">Error details: {scanError}</p>}
                 </div>
             )}
 

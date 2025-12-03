@@ -38,6 +38,18 @@ export const preprocessImage = (file: File): Promise<HTMLCanvasElement> => {
 
             // Draw image to canvas
             ctx.drawImage(img, 0, 0, width, height)
+
+            // Convert to grayscale
+            const imageData = ctx.getImageData(0, 0, width, height)
+            const data = imageData.data
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114)
+                data[i] = avg // red
+                data[i + 1] = avg // green
+                data[i + 2] = avg // blue
+            }
+            ctx.putImageData(imageData, 0, 0)
+
             resolve(canvas)
         }
 
