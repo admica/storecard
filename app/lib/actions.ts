@@ -262,6 +262,19 @@ export async function updateNerdMode(enabled: boolean) {
     revalidatePath('/card/[id]/edit')
 }
 
+export async function updateDarkMode(enabled: boolean) {
+    const session = await auth()
+    if (!session?.user?.email) return
+
+    await prisma.user.update({
+        where: { email: session.user.email },
+        data: { darkMode: enabled }
+    })
+
+    revalidatePath('/settings')
+    revalidatePath('/')
+}
+
 export async function searchLogos(query: string) {
     if (!query || query.length < 2) return []
 

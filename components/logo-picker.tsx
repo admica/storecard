@@ -74,7 +74,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
         <div className="relative">
             <div className="flex items-center space-x-3">
                 {selectedLogo ? (
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-white p-1">
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border dark:border-border bg-surface dark:bg-surface-elevated p-1">
                         <img
                             src={selectedLogo}
                             alt="Selected logo"
@@ -90,7 +90,8 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                                 setSelectedLogo(null)
                                 onSelect('')
                             }}
-                            className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 hover:opacity-100 transition-opacity"
+                            className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 hover:opacity-100 transition-opacity rounded-full"
+                            aria-label="Remove selected logo"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                 <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
@@ -98,7 +99,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                         </button>
                     </div>
                 ) : (
-                    <div className="h-12 w-12 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-accent/10 flex items-center justify-center text-muted">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                         </svg>
@@ -108,7 +109,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                 <button
                     type="button"
                     onClick={() => onOpenChange(true)}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    className="text-sm font-medium text-accent hover:text-accent-dark transition-colors"
                 >
                     {selectedLogo ? 'Change Icon' : 'Select Icon'}
                 </button>
@@ -116,14 +117,18 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
 
             {/* Modal */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div ref={modalRef} className="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden">
-                        <div className="border-b border-gray-100 p-4 flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-900">Select Brand Icon</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70 p-4 backdrop-blur-sm animate-fade-in">
+                    <div 
+                        ref={modalRef} 
+                        className="w-full max-w-md rounded-2xl bg-surface dark:bg-surface shadow-2xl overflow-hidden border border-border-light dark:border-border animate-slide-up"
+                    >
+                        <div className="border-b border-border-light dark:border-border p-4 flex items-center justify-between">
+                            <h3 className="font-semibold text-primary">Select Brand Icon</h3>
                             <button
                                 type="button"
                                 onClick={() => onOpenChange(false)}
-                                className="text-gray-400 hover:text-gray-500"
+                                className="text-muted hover:text-primary transition-colors p-1"
+                                aria-label="Close modal"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                                     <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
@@ -138,25 +143,32 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="Search brand name..."
-                                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    className="flex-1 rounded-xl border border-border dark:border-border bg-background dark:bg-surface-elevated px-4 py-2.5 text-sm text-primary placeholder-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all"
                                     autoFocus
                                 />
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                                    className="rounded-xl bg-gradient-to-r from-accent to-accent-light px-5 py-2.5 text-sm font-medium text-white hover:shadow-lg hover:shadow-accent/25 disabled:opacity-50 transition-all"
                                 >
-                                    {isLoading ? '...' : 'Search'}
+                                    {isLoading ? (
+                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : (
+                                        'Search'
+                                    )}
                                 </button>
                             </form>
 
-                            <div className="grid grid-cols-4 gap-4 max-h-60 overflow-y-auto p-1">
+                            <div className="grid grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1">
                                 {results.map((logo, index) => (
                                     <button
                                         key={`${logo.source}-${index}`}
                                         type="button"
                                         onClick={() => handleSelect(logo.url)}
-                                        className="group relative aspect-square flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 hover:border-indigo-500 hover:shadow-md transition-all"
+                                        className="group relative aspect-square flex items-center justify-center rounded-xl border border-border-light dark:border-border bg-surface dark:bg-surface-elevated p-2 hover:border-accent hover:shadow-md transition-all"
                                     >
                                         <img
                                             src={logo.url}
@@ -164,12 +176,16 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                                             className="max-h-full max-w-full object-contain"
                                         />
                                         {logo.source === 'cache' && (
-                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500" title="From Cache" />
+                                            <span 
+                                                className="absolute top-1 right-1 h-2 w-2 rounded-full bg-success" 
+                                                title="From Cache"
+                                                aria-label="Cached logo"
+                                            />
                                         )}
                                     </button>
                                 ))}
                                 {results.length === 0 && !isLoading && (
-                                    <div className="col-span-4 py-8 text-center text-sm text-gray-500">
+                                    <div className="col-span-4 py-8 text-center text-sm text-muted">
                                         No icons found. Try a different search term.
                                     </div>
                                 )}

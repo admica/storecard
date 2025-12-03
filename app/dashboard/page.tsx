@@ -21,16 +21,6 @@ function formatRelativeTime(date: Date | null): string {
     return date.toLocaleDateString()
 }
 
-// Generate a consistent color based on string
-function stringToColor(str: string) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-    return '#' + '00000'.substring(0, 6 - c.length) + c;
-}
-
 function getGradient(name: string) {
     const gradients = [
         'from-blue-500 to-cyan-400',
@@ -63,7 +53,7 @@ export default async function Dashboard() {
 
     return (
         <div className="min-h-screen bg-background pb-32">
-            <header className="sticky top-0 z-40 glass border-b border-white/20 px-6 py-4">
+            <header className="sticky top-0 z-40 glass dark:glass-dark border-b border-border-light dark:border-border px-6 py-4">
                 <div className="flex items-center justify-between max-w-md mx-auto">
                     <div>
                         <p className="text-xs font-medium text-muted uppercase tracking-wider">My Wallet</p>
@@ -78,8 +68,8 @@ export default async function Dashboard() {
             <main className="px-4 py-6 max-w-md mx-auto space-y-4">
                 {cards.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-gray-400">
+                        <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-accent">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                             </svg>
                         </div>
@@ -87,7 +77,7 @@ export default async function Dashboard() {
                         <p className="text-muted mt-2 mb-8 max-w-xs">Add your first loyalty card to start organizing your wallet.</p>
                         <Link
                             href="/add"
-                            className="rounded-full bg-accent px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 hover:bg-accent/90 transition-all active:scale-95"
+                            className="rounded-full bg-gradient-to-r from-accent to-accent-light px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 hover:shadow-accent/40 hover:scale-[1.02] transition-all active:scale-95"
                         >
                             Add First Card
                         </Link>
@@ -98,11 +88,11 @@ export default async function Dashboard() {
                             <Link
                                 key={card.id}
                                 href={`/card/${card.id}`}
-                                className="group relative overflow-hidden rounded-2xl bg-white p-6 card-shadow transition-all hover:scale-[1.02] active:scale-[0.98] animate-enter"
+                                className="group relative overflow-hidden rounded-2xl bg-surface dark:bg-surface p-6 card-shadow dark:card-shadow-dark border border-border-light dark:border-border transition-all hover:scale-[1.02] hover:card-shadow-hover dark:hover:card-shadow-dark-hover active:scale-[0.98] animate-enter"
                                 style={{ animationDelay: `${index * 50}ms` }}
                             >
                                 {/* Decorative Gradient Background */}
-                                <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`} />
+                                <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 dark:opacity-30 blur-2xl group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity`} />
 
                                 <div className="relative z-10 flex justify-between items-start">
                                     <div className="flex-1">
@@ -112,7 +102,7 @@ export default async function Dashboard() {
                                         )}
                                     </div>
                                     {card.logo ? (
-                                        <div className="h-10 w-10 rounded-xl bg-white p-1 shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
+                                        <div className="h-10 w-10 rounded-xl bg-surface dark:bg-surface-elevated p-1 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
                                             <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                                         </div>
                                     ) : (
@@ -129,7 +119,7 @@ export default async function Dashboard() {
                                     </div>
 
                                     {card.barcodeValue && (
-                                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted bg-gray-50/80 px-2 py-1 rounded-md border border-gray-100">
+                                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted bg-background dark:bg-surface-elevated px-2 py-1 rounded-md border border-border-light dark:border-border">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
                                             </svg>

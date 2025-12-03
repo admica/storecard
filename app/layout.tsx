@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import BottomNav from './components/BottomNav'
+import { ThemeProvider } from './providers/theme-provider'
+import { auth } from '@/auth'
+import { prisma } from '@/lib/prisma'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,16 +28,36 @@ export const viewport: Viewport = {
     userScalable: false, // Prevent zooming on mobile for app-like feel
 }
 
-export default function RootLayout({
+async function getInitialTheme(): Promise<'light' | 'dark'> {
+    try {
+        const session = await auth()
+        if (session?.user?.email) {
+            const user = await prisma.user.findUnique({
+                where: { email: session.user.email },
+                select: { darkMode: true }
+            })
+            return user?.darkMode ? 'dark' : 'light'
+        }
+    } catch {
+        // If auth fails, default to light
+    }
+    return 'light'
+}
+
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const initialTheme = await getInitialTheme()
+    
     return (
-        <html lang="en">
+        <html lang="en" className={initialTheme === 'dark' ? 'dark no-transitions' : 'no-transitions'}>
             <body className={`${inter.className} bg-background text-primary antialiased`}>
-                {children}
-                <BottomNav />
+                <ThemeProvider initialTheme={initialTheme}>
+                    {children}
+                    <BottomNav />
+                </ThemeProvider>
             </body>
         </html>
     )

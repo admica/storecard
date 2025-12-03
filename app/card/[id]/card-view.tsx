@@ -16,15 +16,6 @@ interface CardViewProps {
     }
 }
 
-function stringToColor(str: string) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-    return '#' + '00000'.substring(0, 6 - c.length) + c;
-}
-
 function getGradient(name: string) {
     const gradients = [
         'from-blue-500 to-cyan-400',
@@ -53,7 +44,7 @@ export default function CardView({ card }: CardViewProps) {
     if (isFullscreen) {
         return (
             <div
-                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white animate-enter"
+                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white animate-fade-in"
                 onClick={toggleFullscreen}
             >
                 <div className="w-full max-w-lg px-8 flex flex-col items-center space-y-12">
@@ -61,15 +52,15 @@ export default function CardView({ card }: CardViewProps) {
                         {card.barcodeValue && card.barcodeFormat ? (
                             <Barcode value={card.barcodeValue} format={card.barcodeFormat} />
                         ) : (
-                            <p className="text-muted">No barcode data</p>
+                            <p className="text-gray-400">No barcode data</p>
                         )}
                     </div>
 
                     <div className="text-center">
-                        <p className="text-4xl font-mono font-bold tracking-widest text-primary">
+                        <p className="text-4xl font-mono font-bold tracking-widest text-gray-900">
                             {card.barcodeValue}
                         </p>
-                        <p className="mt-8 text-sm text-muted uppercase tracking-widest animate-pulse">
+                        <p className="mt-8 text-sm text-gray-400 uppercase tracking-widest animate-pulse">
                             Tap to close
                         </p>
                     </div>
@@ -108,9 +99,14 @@ export default function CardView({ card }: CardViewProps) {
             </div>
 
             <div className="w-full max-w-sm space-y-6">
+                {/* Barcode container - always white for scanability */}
                 <div
-                    className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col items-center cursor-pointer transition-transform active:scale-95"
+                    className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-200 flex flex-col items-center cursor-pointer transition-transform active:scale-95 hover:shadow-md"
                     onClick={toggleFullscreen}
+                    role="button"
+                    aria-label="View barcode fullscreen"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && toggleFullscreen()}
                 >
                     <div className="w-full flex justify-center py-4">
                         {card.barcodeValue && card.barcodeFormat ? (
@@ -118,10 +114,10 @@ export default function CardView({ card }: CardViewProps) {
                                 <Barcode value={card.barcodeValue} format={card.barcodeFormat} />
                             </div>
                         ) : (
-                            <div className="text-muted italic">No barcode data</div>
+                            <div className="text-gray-400 italic">No barcode data</div>
                         )}
                     </div>
-                    <p className="mt-4 text-xl font-mono font-bold tracking-widest text-primary">
+                    <p className="mt-4 text-xl font-mono font-bold tracking-widest text-gray-900">
                         {card.barcodeValue}
                     </p>
                     <p className="mt-2 text-xs text-accent font-medium uppercase tracking-wider">
@@ -130,7 +126,7 @@ export default function CardView({ card }: CardViewProps) {
                 </div>
 
                 {card.image && (
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div className="bg-surface dark:bg-surface rounded-2xl p-4 card-shadow dark:card-shadow-dark border border-border-light dark:border-border">
                         <img src={card.image} alt="Card Image" className="w-full rounded-xl object-contain" />
                     </div>
                 )}

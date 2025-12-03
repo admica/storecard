@@ -8,61 +8,85 @@ export default function Page() {
     const [errorMessage, dispatch] = useFormState(authenticate, undefined)
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
-            <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
-                <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
-                    Sign in to your account
-                </h2>
-                <form action={dispatch} className="space-y-6">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
+            </div>
+
+            <div className="relative w-full max-w-md space-y-8 rounded-2xl bg-surface dark:bg-surface p-8 card-shadow dark:card-shadow-dark border border-border-light dark:border-border">
+                {/* Logo/Header */}
+                <div className="text-center">
+                    <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-4">
+                        S
+                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight text-primary">
+                        Welcome back
+                    </h2>
+                    <p className="mt-2 text-sm text-muted">
+                        Sign in to access your loyalty cards
+                    </p>
+                </div>
+
+                <form action={dispatch} className="space-y-5">
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="email" className="block text-sm font-medium text-primary mb-1.5">
                             Email address
                         </label>
-                        <div className="mt-1">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                            />
-                        </div>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            className="block w-full rounded-xl border border-border dark:border-border bg-background dark:bg-surface-elevated px-4 py-3 text-primary placeholder-muted shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all text-sm"
+                            placeholder="you@example.com"
+                        />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="password" className="block text-sm font-medium text-primary mb-1.5">
                             Password
                         </label>
-                        <div className="mt-1">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                            />
-                        </div>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            autoComplete="current-password"
+                            required
+                            className="block w-full rounded-xl border border-border dark:border-border bg-background dark:bg-surface-elevated px-4 py-3 text-primary placeholder-muted shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all text-sm"
+                            placeholder="••••••••"
+                        />
                     </div>
 
-                    <div>
+                    <div className="pt-2">
                         <LoginButton />
                     </div>
+
                     <div
-                        className="flex h-8 items-end space-x-1"
+                        className="flex h-8 items-center justify-center"
                         aria-live="polite"
                         aria-atomic="true"
                     >
                         {errorMessage && (
-                            <p className="text-sm text-red-500">{errorMessage}</p>
+                            <div className="flex items-center gap-2 text-sm text-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                                {errorMessage}
+                            </div>
                         )}
                     </div>
                 </form>
-                <div className="text-center text-sm">
-                    <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                        Don't have an account? Register
-                    </Link>
+
+                <div className="text-center">
+                    <p className="text-sm text-muted">
+                        Don't have an account?{' '}
+                        <Link href="/register" className="font-semibold text-accent hover:text-accent-dark transition-colors">
+                            Create one
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>
@@ -76,9 +100,19 @@ function LoginButton() {
         <button
             type="submit"
             disabled={pending}
-            className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400"
+            className="flex w-full justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-accent to-accent-light px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
         >
-            {pending ? 'Signing in...' : 'Sign in'}
+            {pending ? (
+                <>
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing in...
+                </>
+            ) : (
+                'Sign in'
+            )}
         </button>
     )
 }
