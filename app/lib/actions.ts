@@ -275,7 +275,7 @@ export async function searchLogos(query: string) {
         where: { name: normalizedQuery }
     })
 
-    const results = []
+    const results: { source: 'cache' | 'api' | 'fallback'; url: string; name: string }[] = []
 
     if (cachedLogo) {
         results.push({
