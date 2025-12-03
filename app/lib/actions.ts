@@ -293,7 +293,29 @@ export async function searchLogos(query: string) {
         name: `${query} (Favicon)`
     })
 
-    // 3. Call logo.dev API if not in cache (or even if in cache, to offer more options)
+    // 3. Call Clearbit Autocomplete API (Free)
+    try {
+        const response = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(normalizedQuery)}`)
+        if (response.ok) {
+            const data = await response.json()
+            // data is array of { name: string, domain: string, logo: string }
+            data.forEach((item: any) => {
+                // Avoid duplicates
+                const isDuplicate = results.some(r => r.url === item.logo)
+                if (!isDuplicate && cachedLogo?.logoUrl !== item.logo) {
+                    results.push({
+                        source: 'api',
+                        url: item.logo,
+                        name: item.name
+                    })
+                }
+            })
+        }
+    } catch (error) {
+        console.error('Clearbit search failed:', error)
+    }
+
+    // 4. Call logo.dev API if not in cache (or even if in cache, to offer more options)
     // Only if we have keys
     if (process.env.LOGO_DEV_SECRET) {
         try {
@@ -307,8 +329,9 @@ export async function searchLogos(query: string) {
                 const data = await response.json()
                 // data is array of { name: string, domain: string, logo_url: string }
                 data.slice(0, 5).forEach((item: any) => {
-                    // Avoid duplicates if cache already has this URL
-                    if (cachedLogo?.logoUrl !== item.logo_url) {
+                    // Avoid duplicates
+                    const isDuplicate = results.some(r => r.url === item.logo_url)
+                    if (!isDuplicate && cachedLogo?.logoUrl !== item.logo_url) {
                         results.push({
                             source: 'api',
                             url: item.logo_url,

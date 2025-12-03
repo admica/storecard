@@ -13,10 +13,11 @@ interface LogoPickerProps {
     initialLogo?: string | null
     searchTerm: string
     onSelect: (logoUrl: string) => void
+    isOpen: boolean
+    onOpenChange: (isOpen: boolean) => void
 }
 
-export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPickerProps) {
-    const [isOpen, setIsOpen] = useState(false)
+export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, onOpenChange }: LogoPickerProps) {
     const [query, setQuery] = useState(searchTerm)
     const [results, setResults] = useState<LogoResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
@@ -34,12 +35,12 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPi
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                setIsOpen(false)
+                onOpenChange(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
+    }, [onOpenChange])
 
     const handleSearch = async (e?: React.FormEvent) => {
         e?.preventDefault()
@@ -58,7 +59,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPi
 
     // Auto-search when opening modal if query exists
     useEffect(() => {
-        if (isOpen && query && results.length === 0) {
+        if (isOpen && query) {
             handleSearch()
         }
     }, [isOpen])
@@ -66,7 +67,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPi
     const handleSelect = (logoUrl: string) => {
         setSelectedLogo(logoUrl)
         onSelect(logoUrl)
-        setIsOpen(false)
+        onOpenChange(false)
     }
 
     return (
@@ -106,7 +107,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPi
 
                 <button
                     type="button"
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => onOpenChange(true)}
                     className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                 >
                     {selectedLogo ? 'Change Icon' : 'Select Icon'}
@@ -121,7 +122,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect }: LogoPi
                             <h3 className="font-semibold text-gray-900">Select Brand Icon</h3>
                             <button
                                 type="button"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => onOpenChange(false)}
                                 className="text-gray-400 hover:text-gray-500"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
