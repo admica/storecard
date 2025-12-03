@@ -1,4 +1,4 @@
-import { auth, signOut } from '@/auth'
+import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -21,6 +21,29 @@ function formatRelativeTime(date: Date | null): string {
     return date.toLocaleDateString()
 }
 
+// Generate a consistent color based on string
+function stringToColor(str: string) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+}
+
+function getGradient(name: string) {
+    const gradients = [
+        'from-blue-500 to-cyan-400',
+        'from-purple-500 to-pink-400',
+        'from-emerald-500 to-teal-400',
+        'from-orange-500 to-amber-400',
+        'from-rose-500 to-red-400',
+        'from-indigo-500 to-violet-400',
+    ]
+    const index = name.length % gradients.length
+    return gradients[index]
+}
+
 export default async function Dashboard() {
     const session = await auth()
     if (!session?.user?.email) {
@@ -39,100 +62,82 @@ export default async function Dashboard() {
     })
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            <header className="bg-white shadow">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Cards</h1>
-                    <form
-                        action={async () => {
-                            'use server'
-                            await signOut()
-                        }}
-                    >
-                        <button
-                            type="submit"
-                            className="text-sm font-medium text-gray-500 hover:text-gray-700"
-                        >
-                            Sign out
-                        </button>
-                    </form>
+        <div className="min-h-screen bg-background pb-32">
+            <header className="sticky top-0 z-40 glass border-b border-white/20 px-6 py-4">
+                <div className="flex items-center justify-between max-w-md mx-auto">
+                    <div>
+                        <p className="text-xs font-medium text-muted uppercase tracking-wider">My Wallet</p>
+                        <h1 className="text-2xl font-bold text-primary">Cards</h1>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
+                        {cards.length}
+                    </div>
                 </div>
             </header>
-            <main>
-                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    {cards.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-                            <h3 className="mt-2 text-sm font-semibold text-gray-900">No cards</h3>
-                            <p className="mt-1 text-sm text-gray-500">Get started by adding a new loyalty card.</p>
-                            <div className="mt-6">
-                                <Link
-                                    href="/add"
-                                    className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Add Card
-                                </Link>
-                            </div>
+
+            <main className="px-4 py-6 max-w-md mx-auto space-y-4">
+                {cards.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-gray-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                            </svg>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {cards.map((card) => (
-                                <Link
-                                    key={card.id}
-                                    href={`/card/${card.id}`}
-                                    className="group relative flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2"
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-lg font-semibold text-gray-900 truncate">
-                                                {card.retailer}
-                                            </p>
-                                            {card.note && (
-                                                <p className="mt-1 text-sm text-gray-500 truncate">
-                                                    {card.note}
-                                                </p>
-                                            )}
-                                        </div>
+                        <h3 className="text-lg font-semibold text-primary">No cards yet</h3>
+                        <p className="text-muted mt-2 mb-8 max-w-xs">Add your first loyalty card to start organizing your wallet.</p>
+                        <Link
+                            href="/add"
+                            className="rounded-full bg-accent px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 hover:bg-accent/90 transition-all active:scale-95"
+                        >
+                            Add First Card
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {cards.map((card, index) => (
+                            <Link
+                                key={card.id}
+                                href={`/card/${card.id}`}
+                                className="group relative overflow-hidden rounded-2xl bg-white p-6 card-shadow transition-all hover:scale-[1.02] active:scale-[0.98] animate-enter"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                                {/* Decorative Gradient Background */}
+                                <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`} />
+
+                                <div className="relative z-10 flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold text-primary tracking-tight">{card.retailer}</h3>
+                                        {card.note && (
+                                            <p className="text-sm text-muted mt-1 truncate pr-4">{card.note}</p>
+                                        )}
+                                    </div>
+                                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-lg shadow-sm`}>
+                                        {card.retailer[0].toUpperCase()}
+                                    </div>
+                                </div>
+
+                                <div className="relative z-10 mt-6 flex items-end justify-between">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Last Used</span>
+                                        <span className="text-xs font-semibold text-primary mt-0.5">{formatRelativeTime(card.lastUsed)}</span>
                                     </div>
 
                                     {card.barcodeValue && (
-                                        <div className="mt-4 flex items-center gap-2 text-xs font-mono text-gray-600 bg-gray-50 rounded px-2 py-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted bg-gray-50/80 px-2 py-1 rounded-md border border-gray-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
                                             </svg>
-                                            <span className="truncate">
-                                                {card.barcodeValue.slice(0, 12)}...
+                                            <span className="tracking-wider">
+                                                {card.barcodeValue.slice(-4)}
                                             </span>
                                         </div>
                                     )}
-
-                                    <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {formatRelativeTime(card.lastUsed)}
-                                        </span>
-                                        <span className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            View →
-                                        </span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </main>
-            <div className="fixed bottom-6 right-6">
-                <Link
-                    href="/add"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    <span className="sr-only">Add Card</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                </Link>
-            </div>
         </div>
     )
 }

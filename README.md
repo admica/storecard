@@ -2,6 +2,9 @@
 
 A Next.js application to manage your store cards.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fadmica%2Fstorecard&env=DATABASE_URL,DIRECT_URL,AUTH_SECRET,BLOB_READ_WRITE_TOKEN&envDescription=Required%20environment%20variables%20for%20the%20app&project-name=storecard&repository-name=storecard)
+
+
 ## Tech Stack
 
 - **Framework**: Next.js 16
