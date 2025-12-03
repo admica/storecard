@@ -38,7 +38,65 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
         }
     }
 
-    // ... (rest of the file)
+    // Map ZXing format to our format strings
+    const mapBarcodeFormat = (format: BarcodeFormat): string => {
+        const formatMap: Record<number, string> = {
+            [BarcodeFormat.CODE_128]: 'code128',
+            [BarcodeFormat.EAN_13]: 'ean13',
+            [BarcodeFormat.UPC_A]: 'upca',
+            [BarcodeFormat.QR_CODE]: 'qrcode',
+            [BarcodeFormat.PDF_417]: 'pdf417',
+            [BarcodeFormat.DATA_MATRIX]: 'datamatrix',
+            [BarcodeFormat.AZTEC]: 'aztec',
+            [BarcodeFormat.CODE_39]: 'code39',
+        }
+        return formatMap[format] || 'code128'
+    }
+
+    // Helper to create image element from file
+    const createImageElement = (file: File): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image()
+            const url = URL.createObjectURL(file)
+            img.onload = () => {
+                URL.revokeObjectURL(url)
+                resolve(img)
+            }
+            img.onerror = reject
+            img.src = url
+        })
+    }
+
+    // Handle image upload and barcode scanning
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // Show preview
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            setImagePreview(event.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+
+        // Scan for barcode
+        setScanStatus('scanning')
+        try {
+            const codeReader = new BrowserMultiFormatReader()
+            const result = await codeReader.decodeFromImageElement(
+                await createImageElement(file)
+            )
+
+            // Success! Found a barcode
+            setScannedResult(result.getText())
+            setDetectedFormat(mapBarcodeFormat(result.getBarcodeFormat()))
+            setScanStatus('success')
+        } catch (error) {
+            console.error('Barcode detection failed:', error)
+            setScanStatus('error')
+            // User can still manually enter barcode
+        }
+    }
 
     return (
         // ...
@@ -150,7 +208,6 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
                 {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
             </div>
         </form>
-            </div >
         </div >
     )
 }
