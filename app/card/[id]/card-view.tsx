@@ -44,20 +44,22 @@ export default function CardView({ card }: CardViewProps) {
     if (isFullscreen) {
         return (
             <div
-                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white animate-fade-in"
+                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white animate-fade-in px-6"
                 onClick={toggleFullscreen}
             >
-                <div className="w-full max-w-lg px-8 flex flex-col items-center space-y-12">
-                    <div className="transform scale-150 origin-center">
+                <div className="w-full max-w-lg px-4 sm:px-8 flex flex-col items-center space-y-12">
+                    <div className="w-full flex justify-center overflow-hidden">
                         {card.barcodeValue && card.barcodeFormat ? (
-                            <Barcode value={card.barcodeValue} format={card.barcodeFormat} />
+                            <div className="transform scale-125 sm:scale-150 origin-center">
+                                <Barcode value={card.barcodeValue} format={card.barcodeFormat} />
+                            </div>
                         ) : (
                             <p className="text-gray-400">No barcode data</p>
                         )}
                     </div>
 
-                    <div className="text-center">
-                        <p className="text-4xl font-mono font-bold tracking-widest text-gray-900">
+                    <div className="text-center px-4">
+                        <p className="text-2xl sm:text-4xl font-mono font-bold tracking-widest text-gray-900 break-all">
                             {card.barcodeValue}
                         </p>
                         <p className="mt-8 text-sm text-gray-400 uppercase tracking-widest animate-pulse">
@@ -79,11 +81,11 @@ export default function CardView({ card }: CardViewProps) {
                     <div className="flex justify-between items-start">
                         <h1 className="text-3xl font-bold tracking-tight">{card.retailer}</h1>
                         {card.logo ? (
-                            <div className="h-16 w-16 rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden shadow-lg">
+                            <div className="h-24 w-24 rounded-2xl bg-white p-2 flex items-center justify-center overflow-hidden shadow-lg">
                                 <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                             </div>
                         ) : (
-                            <div className="h-16 w-16 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold">
+                            <div className="h-24 w-24 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl font-bold">
                                 {card.retailer[0].toUpperCase()}
                             </div>
                         )}

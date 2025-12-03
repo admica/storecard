@@ -102,11 +102,11 @@ export default async function Dashboard() {
                                         )}
                                     </div>
                                     {card.logo ? (
-                                        <div className="h-14 w-14 rounded-xl bg-surface dark:bg-surface-elevated p-1.5 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
+                                        <div className="h-16 w-16 rounded-xl bg-surface dark:bg-surface-elevated p-2 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
                                             <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                                         </div>
                                     ) : (
-                                        <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-xl shadow-sm`}>
+                                        <div className={`h-16 w-16 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-2xl shadow-sm`}>
                                             {card.retailer[0].toUpperCase()}
                                         </div>
                                     )}
