@@ -14,7 +14,7 @@ export default function Barcode({ value, format }: { value: string; format: stri
                     text: value,        // Text to encode
                     scale: 3,           // 3x scaling factor
                     height: 10,         // Bar height, in millimeters
-                    includetext: true,  // Show human-readable text
+                    includetext: false, // We display text separately below
                     textxalign: 'center', // Always good to set this
                 })
             } catch (e) {
