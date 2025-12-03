@@ -15,7 +15,7 @@ export default function BottomNav() {
 
     return (
         <nav 
-            className="fixed bottom-0 left-0 right-0 z-50 glass dark:glass-dark border-t border-border-light dark:border-border pb-safe"
+            className="fixed bottom-0 left-0 right-0 z-50 glass dark:bg-slate-800/95 dark:backdrop-blur-md border-t border-border-light dark:border-slate-700 pb-safe"
             role="navigation"
             aria-label="Main navigation"
         >

@@ -79,11 +79,11 @@ export default function CardView({ card }: CardViewProps) {
                     <div className="flex justify-between items-start">
                         <h1 className="text-3xl font-bold tracking-tight">{card.retailer}</h1>
                         {card.logo ? (
-                            <div className="h-12 w-12 rounded-full bg-white p-1 flex items-center justify-center overflow-hidden shadow-lg">
+                            <div className="h-16 w-16 rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden shadow-lg">
                                 <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                             </div>
                         ) : (
-                            <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-bold">
+                            <div className="h-16 w-16 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold">
                                 {card.retailer[0].toUpperCase()}
                             </div>
                         )}

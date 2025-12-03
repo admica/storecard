@@ -53,7 +53,7 @@ export default async function Dashboard() {
 
     return (
         <div className="min-h-screen bg-background pb-32">
-            <header className="sticky top-0 z-40 glass dark:glass-dark border-b border-border-light dark:border-border px-6 py-4">
+            <header className="sticky top-0 z-40 glass dark:bg-slate-800/95 dark:backdrop-blur-md border-b border-border-light dark:border-slate-700 px-6 py-4">
                 <div className="flex items-center justify-between max-w-md mx-auto">
                     <div>
                         <p className="text-xs font-medium text-muted uppercase tracking-wider">My Wallet</p>
@@ -102,11 +102,11 @@ export default async function Dashboard() {
                                         )}
                                     </div>
                                     {card.logo ? (
-                                        <div className="h-10 w-10 rounded-xl bg-surface dark:bg-surface-elevated p-1 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
+                                        <div className="h-14 w-14 rounded-xl bg-surface dark:bg-surface-elevated p-1.5 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
                                             <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                                         </div>
                                     ) : (
-                                        <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-lg shadow-sm`}>
+                                        <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-xl shadow-sm`}>
                                             {card.retailer[0].toUpperCase()}
                                         </div>
                                     )}
@@ -117,17 +117,6 @@ export default async function Dashboard() {
                                         <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Last Used</span>
                                         <span className="text-xs font-semibold text-primary mt-0.5">{formatRelativeTime(card.lastUsed)}</span>
                                     </div>
-
-                                    {card.barcodeValue && (
-                                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted bg-background dark:bg-surface-elevated px-2 py-1 rounded-md border border-border-light dark:border-border">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-                                            </svg>
-                                            <span className="tracking-wider">
-                                                {card.barcodeValue.slice(-4)}
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                             </Link>
                         ))}

@@ -26,7 +26,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
             <header className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-center">
                 <Link
                     href="/dashboard"
-                    className="h-10 w-10 rounded-full glass dark:glass-dark flex items-center justify-center text-primary hover:bg-surface/80 dark:hover:bg-surface-elevated/80 transition-colors"
+                    className="h-10 w-10 rounded-full glass dark:bg-slate-800/90 dark:backdrop-blur-md flex items-center justify-center text-primary hover:bg-surface/80 dark:hover:bg-slate-700 transition-colors"
                     aria-label="Back to dashboard"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -37,7 +37,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
                 <div className="flex space-x-2">
                     <Link
                         href={`/card/${card.id}/edit`}
-                        className="h-10 w-10 rounded-full glass dark:glass-dark flex items-center justify-center text-primary hover:bg-surface/80 dark:hover:bg-surface-elevated/80 transition-colors"
+                        className="h-10 w-10 rounded-full glass dark:bg-slate-800/90 dark:backdrop-blur-md flex items-center justify-center text-primary hover:bg-surface/80 dark:hover:bg-slate-700 transition-colors"
                         aria-label="Edit card"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -47,7 +47,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
                     <form action={deleteCard.bind(null, card.id)}>
                         <button
                             type="submit"
-                            className="h-10 w-10 rounded-full glass dark:glass-dark flex items-center justify-center text-error hover:bg-error/10 transition-colors"
+                            className="h-10 w-10 rounded-full glass dark:bg-slate-800/90 dark:backdrop-blur-md flex items-center justify-center text-error hover:bg-error/10 dark:hover:bg-red-900/50 transition-colors"
                             aria-label="Delete card"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
