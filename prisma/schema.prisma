@@ -28,9 +28,18 @@ model Card {
   barcodeValue  String?
   barcodeFormat String?  // e.g., "CODE128", "QR_CODE"
   image         String?  // Path to uploaded image or base64
+  logo          String?  // URL to the brand logo/icon
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lastUsed      DateTime?
+}
+
+model BrandLogo {
+  id        String   @id @default(cuid())
+  name      String   @unique // Normalized retailer name (e.g. "target")
+  logoUrl   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

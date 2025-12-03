@@ -11,6 +11,7 @@ interface CardViewProps {
         barcodeValue: string | null
         barcodeFormat: string | null
         image: string | null
+        logo: string | null
         note: string | null
     }
 }
@@ -86,9 +87,15 @@ export default function CardView({ card }: CardViewProps) {
                 <div className="relative z-10 flex flex-col h-48 justify-between">
                     <div className="flex justify-between items-start">
                         <h1 className="text-3xl font-bold tracking-tight">{card.retailer}</h1>
-                        <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-bold">
-                            {card.retailer[0].toUpperCase()}
-                        </div>
+                        {card.logo ? (
+                            <div className="h-12 w-12 rounded-full bg-white p-1 flex items-center justify-center overflow-hidden shadow-lg">
+                                <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
+                            </div>
+                        ) : (
+                            <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-bold">
+                                {card.retailer[0].toUpperCase()}
+                            </div>
+                        )}
                     </div>
 
                     <div>

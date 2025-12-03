@@ -76,11 +76,20 @@ export async function createCard(prevState: string | undefined, formData: FormDa
         return 'Not authenticated'
     }
 
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+    })
+
+    if (!user) {
+        return 'User not found'
+    }
+
     const retailer = formData.get('retailer') as string
     const note = formData.get('note') as string
     const barcodeValue = formData.get('barcodeValue') as string
     const barcodeFormat = formData.get('barcodeFormat') as string
     const imageFile = formData.get('image') as File
+    const logo = formData.get('logo') as string
 
     if (!retailer) {
         return 'Retailer name is required'
@@ -96,24 +105,37 @@ export async function createCard(prevState: string | undefined, formData: FormDa
         } catch (error) {
             console.error('Image upload failed:', error)
             // Continue without image rather than failing completely
-            // The card will be created without an image
         }
     }
 
     await prisma.card.create({
         data: {
             retailer,
-            note,
             barcodeValue,
             barcodeFormat,
+            note,
             image: imagePath,
-            user: {
-                connect: {
-                    email: session.user.email,
-                },
-            },
+            logo: logo || null,
+            userId: user.id,
         },
     })
+
+    // Cache logo if provided
+    if (logo) {
+        const normalizedName = retailer.toLowerCase().trim()
+            .replace(/\s+(store|inc|llc|ltd|corp|corporation)$/g, '')
+            .trim()
+
+        try {
+            await prisma.brandLogo.upsert({
+                where: { name: normalizedName },
+                update: { logoUrl: logo },
+                create: { name: normalizedName, logoUrl: logo }
+            })
+        } catch (e) {
+            console.error('Failed to cache logo:', e)
+        }
+    }
 
     revalidatePath('/dashboard')
     redirect('/dashboard')
@@ -146,6 +168,7 @@ export async function updateCard(id: string, prevState: string | undefined, form
     const barcodeValue = formData.get('barcodeValue') as string
     const barcodeFormat = formData.get('barcodeFormat') as string
     const imageFile = formData.get('image') as File
+    const logo = formData.get('logo') as string
 
     if (!retailer) {
         return 'Retailer name is required'
@@ -181,8 +204,26 @@ export async function updateCard(id: string, prevState: string | undefined, form
             barcodeValue,
             barcodeFormat,
             image: imagePath,
+            ...(logo ? { logo } : {}),
         },
     })
+
+    // Cache logo if provided
+    if (logo) {
+        const normalizedName = retailer.toLowerCase().trim()
+            .replace(/\s+(store|inc|llc|ltd|corp|corporation)$/g, '')
+            .trim()
+
+        try {
+            await prisma.brandLogo.upsert({
+                where: { name: normalizedName },
+                update: { logoUrl: logo },
+                create: { name: normalizedName, logoUrl: logo }
+            })
+        } catch (e) {
+            console.error('Failed to cache logo:', e)
+        }
+    }
 
     revalidatePath('/dashboard')
     revalidatePath(`/card/${id}`)
@@ -219,5 +260,68 @@ export async function updateNerdMode(enabled: boolean) {
     revalidatePath('/settings')
     revalidatePath('/add')
     revalidatePath('/card/[id]/edit')
+}
+
+export async function searchLogos(query: string) {
+    if (!query || query.length < 2) return []
+
+    // Normalize query
+    const normalizedQuery = query.toLowerCase().trim()
+        .replace(/\s+(store|inc|llc|ltd|corp|corporation)$/g, '')
+        .trim()
+
+    // 1. Check cache first
+    const cachedLogo = await prisma.brandLogo.findUnique({
+        where: { name: normalizedQuery }
+    })
+
+    const results = []
+
+    if (cachedLogo) {
+        results.push({
+            source: 'cache',
+            url: cachedLogo.logoUrl,
+            name: query // Use original query as display name
+        })
+    }
+
+    // 2. Always add Google Favicon fallback
+    // Try both .com and just the name as domain
+    results.push({
+        source: 'fallback',
+        url: `https://www.google.com/s2/favicons?domain=${normalizedQuery}.com&sz=128`,
+        name: `${query} (Favicon)`
+    })
+
+    // 3. Call logo.dev API if not in cache (or even if in cache, to offer more options)
+    // Only if we have keys
+    if (process.env.LOGO_DEV_SECRET) {
+        try {
+            const response = await fetch(`https://api.logo.dev/search?q=${encodeURIComponent(normalizedQuery)}`, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.LOGO_DEV_SECRET}`
+                }
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                // data is array of { name: string, domain: string, logo_url: string }
+                data.slice(0, 5).forEach((item: any) => {
+                    // Avoid duplicates if cache already has this URL
+                    if (cachedLogo?.logoUrl !== item.logo_url) {
+                        results.push({
+                            source: 'api',
+                            url: item.logo_url,
+                            name: item.name || item.domain
+                        })
+                    }
+                })
+            }
+        } catch (error) {
+            console.error('Logo.dev search failed:', error)
+        }
+    }
+
+    return results
 }
 

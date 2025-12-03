@@ -111,9 +111,15 @@ export default async function Dashboard() {
                                             <p className="text-sm text-muted mt-1 truncate pr-4">{card.note}</p>
                                         )}
                                     </div>
-                                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-lg shadow-sm`}>
-                                        {card.retailer[0].toUpperCase()}
-                                    </div>
+                                    {card.logo ? (
+                                        <div className="h-10 w-10 rounded-xl bg-white p-1 shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
+                                            <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
+                                        </div>
+                                    ) : (
+                                        <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-lg shadow-sm`}>
+                                            {card.retailer[0].toUpperCase()}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="relative z-10 mt-6 flex items-end justify-between">
