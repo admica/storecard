@@ -286,10 +286,11 @@ export async function searchLogos(query: string) {
     }
 
     // 2. Always add Google Favicon fallback
-    // Try both .com and just the name as domain
+    // Try to guess domain by removing spaces
+    const domainGuess = normalizedQuery.replace(/\s+/g, '')
     results.push({
         source: 'fallback',
-        url: `https://www.google.com/s2/favicons?domain=${normalizedQuery}.com&sz=128`,
+        url: `https://www.google.com/s2/favicons?domain=${domainGuess}.com&sz=128`,
         name: `${query} (Favicon)`
     })
 
