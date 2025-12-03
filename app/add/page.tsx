@@ -16,3 +16,4 @@ export default async function AddCardPage() {
 
     return <AddCardForm nerdMode={user?.nerdMode || false} />
 }
+// Trigger redeploy
