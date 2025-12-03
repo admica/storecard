@@ -1,6 +1,7 @@
 'use client'
 
 import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser'
+import { DecodeHintType } from '@zxing/library'
 import { useFormState, useFormStatus } from 'react-dom'
 import { createCard } from '@/app/lib/actions'
 import { useState, useRef } from 'react'
@@ -67,13 +68,40 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
         }
         reader.readAsDataURL(file)
 
-        // Scan for barcode
+        // Scan for barcode with TRY_HARDER mode for better detection
         setScanStatus('scanning')
         try {
-            const codeReader = new BrowserMultiFormatReader()
-            const result = await codeReader.decodeFromCanvas(
-                await preprocessImage(file)
-            )
+            const hints = new Map()
+            hints.set(DecodeHintType.TRY_HARDER, true)
+            
+            const codeReader = new BrowserMultiFormatReader(hints)
+            
+            let result
+            
+            // Try multiple detection methods for best results
+            try {
+                // Method 1: Use preprocessed canvas
+                const canvas = await preprocessImage(file)
+                result = codeReader.decodeFromCanvas(canvas)
+            } catch {
+                // Method 2: Try decoding directly from image element
+                // This uses a different code path that might work better for some images
+                console.log('Canvas decode failed, trying image element...')
+                const imgElement = document.createElement('img')
+                const imgUrl = URL.createObjectURL(file)
+                imgElement.src = imgUrl
+                
+                await new Promise<void>((resolve, reject) => {
+                    imgElement.onload = () => resolve()
+                    imgElement.onerror = () => reject(new Error('Failed to load image'))
+                })
+                
+                try {
+                    result = await codeReader.decodeFromImageElement(imgElement)
+                } finally {
+                    URL.revokeObjectURL(imgUrl)
+                }
+            }
 
             // Success! Found a barcode
             setScannedResult(result.getText())
