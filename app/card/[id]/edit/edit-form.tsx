@@ -91,7 +91,96 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
     }
 
     return (
+    return (
         <>
+            {/* Scanning Options */}
+            <div className="mb-6 space-y-3">
+                {isScanning ? (
+                    <div>
+                        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                            <video ref={ref} className="h-full w-full object-cover" />
+                            <button
+                                type="button"
+                                onClick={() => setIsScanning(false)}
+                                className="absolute top-2 right-2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <p className="mt-2 text-center text-sm text-gray-500">Point camera at barcode</p>
+                    </div>
+                ) : (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setIsScanning(true)}
+                            className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mr-2 h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+                            </svg>
+                            Scan with Camera
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex w-full items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:border-indigo-400 hover:bg-gray-50"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mr-2 h-5 w-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            Upload Photo to Scan Barcode
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                        />
+                    </>
+                )}
+            </div>
+
+            {/* Scan Status Messages */}
+            {scanStatus === 'scanning' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center">
+                    <svg className="animate-spin h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="text-sm text-blue-700">Scanning image for barcode...</p>
+                </div>
+            )}
+
+            {scanStatus === 'success' && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-sm text-green-700">✅ Barcode detected! Fields auto-filled.</p>
+                </div>
+            )}
+
+            {scanStatus === 'error' && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm text-yellow-700">⚠️ No barcode found in image. You can still enter it manually.</p>
+                </div>
+            )}
+
+            {/* Image Preview */}
+            {imagePreview && (
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Uploaded Image Preview
+                    </label>
+                    <img
+                        src={imagePreview}
+                        alt="Card preview"
+                        className="w-full max-h-48 object-contain rounded-lg border border-gray-200"
+                    />
+                </div>
+            )}
+
             <form action={dispatch} className="space-y-6">
                 <div>
                     <div className="flex items-center justify-between">
