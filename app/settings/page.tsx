@@ -1,11 +1,19 @@
 import { auth, signOut } from '@/auth'
+import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { updateNerdMode } from '@/app/lib/actions'
+import NerdModeToggle from './nerd-mode-toggle'
 
 export default async function SettingsPage() {
     const session = await auth()
-    if (!session?.user) {
+    if (!session?.user?.email) {
         redirect('/login')
     }
+
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { nerdMode: true }
+    })
 
     return (
         <div className="min-h-screen bg-background pb-20 pt-10 px-4">
@@ -20,6 +28,11 @@ export default async function SettingsPage() {
                         <h2 className="text-xl font-semibold text-primary">{session.user.name || 'User'}</h2>
                         <p className="text-muted text-sm">{session.user.email}</p>
                     </div>
+                </div>
+
+                {/* Nerd Mode Toggle */}
+                <div className="pt-6 border-t border-border">
+                    <NerdModeToggle initialValue={user?.nerdMode || false} />
                 </div>
 
                 <div className="pt-6 border-t border-border">

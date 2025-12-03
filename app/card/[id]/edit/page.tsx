@@ -19,6 +19,11 @@ export default async function EditCardPage({ params }: { params: Promise<{ id: s
         notFound()
     }
 
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { nerdMode: true }
+    })
+
     return (
         <div className="min-h-screen bg-gray-50 p-4">
             <div className="mx-auto max-w-md rounded-lg bg-white p-6 shadow-md">
@@ -28,7 +33,7 @@ export default async function EditCardPage({ params }: { params: Promise<{ id: s
                         Cancel
                     </a>
                 </div>
-                <EditCardForm card={card} />
+                <EditCardForm card={card} nerdMode={user?.nerdMode || false} />
             </div>
         </div>
     )

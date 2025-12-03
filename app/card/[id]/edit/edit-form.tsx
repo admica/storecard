@@ -6,7 +6,7 @@ import { updateCard } from '@/app/lib/actions'
 import { useState, useRef } from 'react'
 import { useZxing } from 'react-zxing'
 
-export default function EditCardForm({ card }: { card: any }) {
+export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: boolean }) {
     const updateCardWithId = updateCard.bind(null, card.id)
     const [errorMessage, dispatch] = useFormState(updateCardWithId, undefined)
     const [scannedResult, setScannedResult] = useState(card.barcodeValue || '')
@@ -205,27 +205,34 @@ export default function EditCardForm({ card }: { card: any }) {
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="barcodeFormat" className="block text-sm font-medium text-gray-700">
-                        Barcode Format
-                    </label>
-                    <select
-                        name="barcodeFormat"
-                        id="barcodeFormat"
-                        value={detectedFormat}
-                        onChange={(e) => setDetectedFormat(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                    >
-                        <option value="code128">Code 128</option>
-                        <option value="ean13">EAN-13</option>
-                        <option value="upca">UPC-A</option>
-                        <option value="qrcode">QR Code</option>
-                        <option value="pdf417">PDF417</option>
-                        <option value="datamatrix">Data Matrix</option>
-                        <option value="aztec">Aztec</option>
-                        <option value="code39">Code 39</option>
-                    </select>
-                </div>
+                {nerdMode && (
+                    <div>
+                        <label htmlFor="barcodeFormat" className="block text-sm font-medium text-gray-700">
+                            Barcode Format
+                        </label>
+                        <select
+                            name="barcodeFormat"
+                            id="barcodeFormat"
+                            value={detectedFormat}
+                            onChange={(e) => setDetectedFormat(e.target.value)}
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                        >
+                            <option value="code128">Code 128</option>
+                            <option value="ean13">EAN-13</option>
+                            <option value="upca">UPC-A</option>
+                            <option value="qrcode">QR Code</option>
+                            <option value="pdf417">PDF417</option>
+                            <option value="datamatrix">Data Matrix</option>
+                            <option value="aztec">Aztec</option>
+                            <option value="code39">Code 39</option>
+                        </select>
+                    </div>
+                )}
+
+                {/* Hidden input to always submit the format */}
+                {!nerdMode && (
+                    <input type="hidden" name="barcodeFormat" value={detectedFormat} />
+                )}
 
                 <div>
                     <label htmlFor="note" className="block text-sm font-medium text-gray-700">

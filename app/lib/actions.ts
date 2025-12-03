@@ -207,3 +207,17 @@ export async function updateLastUsed(cardId: string) {
     }
 }
 
+export async function updateNerdMode(enabled: boolean) {
+    const session = await auth()
+    if (!session?.user?.email) return
+
+    await prisma.user.update({
+        where: { email: session.user.email },
+        data: { nerdMode: enabled }
+    })
+
+    revalidatePath('/settings')
+    revalidatePath('/add')
+    revalidatePath('/card/[id]/edit')
+}
+
