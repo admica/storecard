@@ -16,6 +16,7 @@ model User {
   email     String   @unique
   password  String
   nerdMode  Boolean  @default(false)
+  darkMode  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cards     Card[]
