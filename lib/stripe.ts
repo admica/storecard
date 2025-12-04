@@ -2,9 +2,22 @@ import { Stripe } from 'stripe'
 import { prisma } from './prisma'
 import { SubscriptionStatus, SubscriptionTier } from '@prisma/client'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-11-17.clover',
-})
+// Initialize Stripe client defensively for build-time compatibility
+let stripe: Stripe
+try {
+  const apiKey = process.env.STRIPE_SECRET_KEY
+  if (!apiKey) {
+    // Create a dummy client for build-time when env vars aren't available
+    stripe = new Stripe('sk_test_dummy', { apiVersion: '2025-11-17.clover' })
+  } else {
+    stripe = new Stripe(apiKey, {
+      apiVersion: '2025-11-17.clover',
+    })
+  }
+} catch (error) {
+  // Fallback for build-time
+  stripe = new Stripe('sk_test_dummy', { apiVersion: '2025-11-17.clover' })
+}
 
 export { stripe }
 

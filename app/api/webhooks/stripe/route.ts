@@ -6,6 +6,12 @@ import { SubscriptionStatus } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is properly configured
+    if (!process.env.STRIPE_WEBHOOK_SECRET || !process.env.STRIPE_SECRET_KEY) {
+      console.error('Stripe environment variables not configured')
+      return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 })
+    }
+
     const body = await request.text()
     const headersList = await headers()
 
@@ -20,7 +26,7 @@ export async function POST(request: NextRequest) {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        process.env.STRIPE_WEBHOOK_SECRET
       )
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message)
