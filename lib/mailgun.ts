@@ -8,10 +8,20 @@ const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
 let mailgunClient: any = null
 
 if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) {
-  const mailgun = new Mailgun(FormData)
-  mailgunClient = mailgun.client({
-    username: 'api',
-    key: process.env.MAILGUN_API_KEY,
+  try {
+    const mailgun = new Mailgun(FormData)
+    mailgunClient = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+    })
+    console.log('[MAILGUN] Client initialized successfully')
+  } catch (error) {
+    console.error('[MAILGUN] Failed to initialize client:', error)
+  }
+} else {
+  console.warn('[MAILGUN] API key or domain not configured:', {
+    hasApiKey: !!process.env.MAILGUN_API_KEY,
+    hasDomain: !!process.env.MAILGUN_DOMAIN,
   })
 }
 
@@ -58,7 +68,12 @@ export async function sendVerificationEmail(email: string, code: string): Promis
   const fromEmail = `StoreCard <postmaster@${domain}>`
 
   try {
-    const data = await mailgunClient.messages.create(domain, {
+    console.log(`[MAILGUN] Attempting to send email to ${email} using domain ${domain}`)
+    console.log(`[MAILGUN] From email: ${fromEmail}`)
+    console.log(`[MAILGUN] API Key present: ${!!process.env.MAILGUN_API_KEY}`)
+    console.log(`[MAILGUN] Domain: ${domain}`)
+
+    const result = await mailgunClient.messages.create(domain, {
       from: fromEmail,
       to: [email],
       subject: 'Verify Your StoreCard Account',
@@ -95,13 +110,20 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       `,
     })
 
-    console.log('Verification email sent successfully:', data)
+    console.log('[MAILGUN] Email sent successfully. Response:', JSON.stringify(result, null, 2))
     return true
-  } catch (error) {
-    console.error('Email sending exception:', error)
+  } catch (error: any) {
+    console.error('[MAILGUN] Email sending exception:', error)
     if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
+      console.error('[MAILGUN] Error message:', error.message)
+      console.error('[MAILGUN] Error stack:', error.stack)
+    }
+    // Log the full error object if available
+    if (error?.response) {
+      console.error('[MAILGUN] Error response:', JSON.stringify(error.response, null, 2))
+    }
+    if (error?.body) {
+      console.error('[MAILGUN] Error body:', JSON.stringify(error.body, null, 2))
     }
     return false
   }
