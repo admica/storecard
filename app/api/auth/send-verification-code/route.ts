@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-<<<<<<< HEAD
     // Generate verification code
     const verificationCode = generateVerificationCode()
 
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
->>>>>>> dbc3688 (Implement Resend email verification system)
 
     return NextResponse.json({
       success: true,

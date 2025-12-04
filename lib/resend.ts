@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // Temporary storage for verification codes (in production, use Redis/database)
 const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
@@ -39,6 +39,11 @@ export function verifyCode(email: string, code: string): boolean {
 
 // Send verification email
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
+  if (!resend) {
+    console.error('Resend API key not configured')
+    return false
+  }
+
   try {
     const { error } = await resend.emails.send({
       from: 'StoreCard <onboarding@storecard.email>',

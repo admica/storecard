@@ -13,23 +13,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-<<<<<<< HEAD
-    // TEMPORARY: Accept any 6-digit code for testing
-    // TODO: Replace with proper Supabase OTP verification
-    if (!/^\d{6}$/.test(code)) {
-=======
     // Verify the code using our Resend implementation
     const isValidCode = verifyCode(email, code)
 
     if (!isValidCode) {
->>>>>>> dbc3688 (Implement Resend email verification system)
       return NextResponse.json(
-        { error: 'Invalid verification code format' },
+        { error: 'Invalid or expired verification code' },
         { status: 400 }
       )
     }
 
-    // In production, verify with Supabase:
+    // Mark user as email verified in our database
     // const { data, error } = await supabaseAdmin.auth.verifyOtp({
     //   email,
     //   token: code,
