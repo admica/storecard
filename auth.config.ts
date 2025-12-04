@@ -7,11 +7,36 @@ export const authConfig = {
     },
     callbacks: {
         async session({ session, token }) {
-            // Add user data including email verification status
-            if (session.user?.email) {
+            // Use data from JWT token instead of querying database
+            // This allows the session callback to run on Edge Runtime
+            if (token && session.user) {
+                session.user.id = token.id as string
+                session.user.emailVerifiedStatus = token.emailVerified as boolean
+                session.user.onboardingComplete = token.onboardingComplete as boolean
+                session.user.subscriptionSelected = token.subscriptionSelected as boolean
+
+                if (token.subscription) {
+                    session.user.subscription = token.subscription as any
+                }
+            }
+
+            return session
+        },
+        async jwt({ token, user, trigger }) {
+            // Add user data to token on sign in
+            if (user) {
+                token.id = user.id
+                token.emailVerified = (user as any).emailVerified
+                token.onboardingComplete = (user as any).onboardingComplete
+                token.subscriptionSelected = (user as any).subscriptionSelected
+            }
+
+            // Refresh user data from database when needed
+            // This runs server-side only, not in middleware
+            if (trigger === 'update' && token.email) {
                 try {
-                    const user = await prisma.user.findUnique({
-                        where: { email: session.user.email },
+                    const dbUser = await prisma.user.findUnique({
+                        where: { email: token.email },
                         select: {
                             id: true,
                             emailVerified: true,
@@ -20,15 +45,15 @@ export const authConfig = {
                         },
                     })
 
-                    if (user) {
-                        session.user.id = user.id
-                        session.user.emailVerifiedStatus = user.emailVerified
-                        session.user.onboardingComplete = user.onboardingComplete
-                        session.user.subscriptionSelected = user.subscriptionSelected
+                    if (dbUser) {
+                        token.id = dbUser.id
+                        token.emailVerified = dbUser.emailVerified
+                        token.onboardingComplete = dbUser.onboardingComplete
+                        token.subscriptionSelected = dbUser.subscriptionSelected
 
                         // Add subscription data
                         const subscription = await prisma.subscription.findUnique({
-                            where: { userId: user.id },
+                            where: { userId: dbUser.id },
                             select: {
                                 tier: true,
                                 status: true,
@@ -37,7 +62,7 @@ export const authConfig = {
                         })
 
                         if (subscription) {
-                            session.user.subscription = {
+                            token.subscription = {
                                 tier: subscription.tier,
                                 status: subscription.status,
                                 currentPeriodEnd: subscription.currentPeriodEnd,
@@ -47,18 +72,10 @@ export const authConfig = {
                         }
                     }
                 } catch (error) {
-                    // Silently fail during build time or when DB is not available
-                    console.warn('Session callback database error:', error)
+                    console.warn('JWT callback database error:', error)
                 }
             }
 
-            return session
-        },
-        async jwt({ token, user }) {
-            // Add user ID to token
-            if (user) {
-                token.id = user.id
-            }
             return token
         },
         authorized({ auth, request: { nextUrl } }) {
