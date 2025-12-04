@@ -8,40 +8,47 @@ export const authConfig = {
     callbacks: {
         async session({ session, token }) {
             // Add user data including email verification status
-            if (session.user?.id) {
-                const user = await prisma.user.findUnique({
-                    where: { id: session.user.id },
-                    select: {
-                        emailVerified: true,
-                        onboardingComplete: true,
-                        subscriptionSelected: true,
-                    },
-                })
+            if (session.user?.email) {
+                try {
+                    const user = await prisma.user.findUnique({
+                        where: { email: session.user.email },
+                        select: {
+                            id: true,
+                            emailVerified: true,
+                            onboardingComplete: true,
+                            subscriptionSelected: true,
+                        },
+                    })
 
-                if (user) {
-                    session.user.emailVerifiedStatus = user.emailVerified
-                    session.user.onboardingComplete = user.onboardingComplete
-                    session.user.subscriptionSelected = user.subscriptionSelected
-                }
+                    if (user) {
+                        session.user.id = user.id
+                        session.user.emailVerifiedStatus = user.emailVerified
+                        session.user.onboardingComplete = user.onboardingComplete
+                        session.user.subscriptionSelected = user.subscriptionSelected
 
-                // Add subscription data
-                const subscription = await prisma.subscription.findUnique({
-                    where: { userId: session.user.id },
-                    select: {
-                        tier: true,
-                        status: true,
-                        currentPeriodEnd: true,
-                    },
-                })
+                        // Add subscription data
+                        const subscription = await prisma.subscription.findUnique({
+                            where: { userId: user.id },
+                            select: {
+                                tier: true,
+                                status: true,
+                                currentPeriodEnd: true,
+                            },
+                        })
 
-                if (subscription) {
-                    session.user.subscription = {
-                        tier: subscription.tier,
-                        status: subscription.status,
-                        currentPeriodEnd: subscription.currentPeriodEnd,
-                        isActive: subscription.status === 'ACTIVE',
-                        isFree: subscription.tier === 'FREE',
+                        if (subscription) {
+                            session.user.subscription = {
+                                tier: subscription.tier,
+                                status: subscription.status,
+                                currentPeriodEnd: subscription.currentPeriodEnd,
+                                isActive: subscription.status === 'ACTIVE',
+                                isFree: subscription.tier === 'FREE',
+                            }
+                        }
                     }
+                } catch (error) {
+                    // Silently fail during build time or when DB is not available
+                    console.warn('Session callback database error:', error)
                 }
             }
 
