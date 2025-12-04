@@ -61,9 +61,17 @@ export async function sendVerificationEmail(email: string, code: string): Promis
 
   try {
     // Create client on-demand (matching Mailgun example)
-    const mg = getMailgunClient()
+    let mg
+    try {
+      mg = getMailgunClient()
+      console.log('[MAILGUN] Client created successfully')
+    } catch (clientError) {
+      console.error('[MAILGUN] Failed to create client:', clientError)
+      return false
+    }
     
     console.log(`[MAILGUN] Sending email to ${email} using domain ${domain}`)
+    console.log(`[MAILGUN] From: ${fromEmail}`)
 
     // Match the exact format from Mailgun example
     const result = await mg.messages.create(domain, {
