@@ -3,9 +3,24 @@
 import { useFormState, useFormStatus } from 'react-dom'
 import { register } from '@/app/lib/actions'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 export default function Page() {
     const [errorMessage, dispatch] = useFormState(register, undefined)
+    const router = useRouter()
+    const formRef = useRef<HTMLFormElement>(null)
+
+    // Handle successful registration redirect
+    useEffect(() => {
+        if (errorMessage === 'success' && formRef.current) {
+            const formData = new FormData(formRef.current)
+            const email = formData.get('email') as string
+            if (email) {
+                router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+            }
+        }
+    }, [errorMessage, router])
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -29,7 +44,7 @@ export default function Page() {
                     </p>
                 </div>
 
-                <form action={dispatch} className="space-y-5">
+                <form ref={formRef} action={dispatch} className="space-y-5">
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-primary mb-1.5">
                             Email address
@@ -70,7 +85,7 @@ export default function Page() {
                         aria-live="polite"
                         aria-atomic="true"
                     >
-                        {errorMessage && (
+                        {errorMessage && errorMessage !== 'success' && (
                             <div className="flex items-center gap-2 text-sm text-error">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />

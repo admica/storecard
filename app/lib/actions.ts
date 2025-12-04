@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
+import { supabaseAdmin } from '@/lib/supabase'
 import { SubscriptionTier } from '@prisma/client'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
@@ -27,29 +28,30 @@ export async function authenticate(prevState: string | undefined, formData: Form
 }
 
 export async function register(prevState: string | undefined, formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    const parsed = z.object({
-        email: z.string().email(),
-        password: z.string().min(6),
-    }).safeParse({ email, password })
-
-    if (!parsed.success) {
-        return 'Invalid fields'
-    }
-
-    const existingUser = await prisma.user.findUnique({
-        where: { email },
-    })
-
-    if (existingUser) {
-        return 'User already exists.'
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10)
-
     try {
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
+
+        const parsed = z.object({
+            email: z.string().email(),
+            password: z.string().min(6),
+        }).safeParse({ email, password })
+
+        if (!parsed.success) {
+            return 'Invalid fields'
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        })
+
+        if (existingUser) {
+            return 'User already exists.'
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        // Create user first
         const user = await prisma.user.create({
             data: {
                 email,
@@ -64,18 +66,32 @@ export async function register(prevState: string | undefined, formData: FormData
                 tier: SubscriptionTier.FREE,
             },
         })
+
+        // Send verification code
+        try {
+            const { error } = await supabaseAdmin.auth.signInWithOtp({
+                email,
+                options: {
+                    shouldCreateUser: false,
+                }
+            })
+
+            if (error) {
+                console.error('Error sending verification code:', error)
+                // Don't fail registration if email fails - user can try again
+                // For now, we'll still redirect to verification page
+            }
+        } catch (emailError) {
+            console.error('Supabase email error:', emailError)
+            // Continue with registration even if email fails
+        }
+
+        // Return success - UI will handle redirect to verification page
+        return 'success'
+
     } catch (error) {
         console.error('Registration error:', error)
-        return 'Failed to create user. ' + (error instanceof Error ? error.message : String(error))
-    }
-
-    try {
-        await signIn('credentials', formData)
-    } catch (error) {
-        if (error instanceof AuthError) {
-            throw error
-        }
-        throw error
+        return 'Failed to create account. Please try again.'
     }
 }
 
