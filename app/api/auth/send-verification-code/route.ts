@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,30 +12,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TEMPORARY: Generate and log verification code for testing
-    // TODO: Replace with proper email service (Supabase SMTP, Resend, etc.)
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+<<<<<<< HEAD
+    // Generate verification code
+    const verificationCode = generateVerificationCode()
 
-    // Store code temporarily (in production, use Redis/database with expiry)
-    // For now, just log it so user can see it
-    console.log(`🔐 VERIFICATION CODE for ${email}: ${verificationCode}`)
-    console.log(`📧 In production, this would be emailed to the user`)
+    // Store code temporarily with expiry
+    storeVerificationCode(email, verificationCode)
 
-    // Mock successful response
-    // const { error } = await supabaseAdmin.auth.signInWithOtp({
-    //   email,
-    //   options: {
-    //     shouldCreateUser: false,
-    //   }
-    // })
+    // Send email with verification code
+    const emailSent = await sendVerificationEmail(email, verificationCode)
 
-    // if (error) {
-    //   console.error('Error sending verification code:', error)
-    //   return NextResponse.json(
-    //     { error: 'Failed to send verification code' },
-    //     { status: 500 }
-    //   )
-    // }
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: 'Failed to send verification email' },
+        { status: 500 }
+      )
+    }
+>>>>>>> dbc3688 (Implement Resend email verification system)
 
     return NextResponse.json({
       success: true,
