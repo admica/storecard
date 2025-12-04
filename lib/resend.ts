@@ -45,8 +45,8 @@ export async function sendVerificationEmail(email: string, code: string): Promis
   }
 
   try {
-    const { error } = await resend.emails.send({
-      from: 'StoreCard <onboarding@storecard.email>',
+    const result = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: email,
       subject: 'Verify Your StoreCard Account',
       html: `
@@ -82,14 +82,19 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       `,
     })
 
-    if (error) {
-      console.error('Resend error:', error)
+    if (result.error) {
+      console.error('Resend API error:', JSON.stringify(result.error, null, 2))
       return false
     }
 
+    console.log('Verification email sent successfully:', result.data)
     return true
   } catch (error) {
-    console.error('Email sending error:', error)
+    console.error('Email sending exception:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     return false
   }
 }
