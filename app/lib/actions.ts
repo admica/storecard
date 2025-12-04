@@ -8,8 +8,8 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
-import { supabaseAdmin } from '@/lib/supabase'
 import { SubscriptionTier } from '@prisma/client'
+import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/resend'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {
@@ -67,21 +67,19 @@ export async function register(prevState: string | undefined, formData: FormData
             },
         })
 
-        // Send verification code using our Resend API
+        // Send verification code using Resend
         try {
-            // Use relative URL since we're on the same origin
-            const response = await fetch('/api/auth/send-verification-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            })
+            // Generate verification code
+            const verificationCode = generateVerificationCode()
 
-            const result = await response.json()
+            // Store code temporarily with expiry
+            storeVerificationCode(email, verificationCode)
 
-            if (!response.ok) {
-                console.error('Error sending verification code:', result.error)
+            // Send email with verification code
+            const emailSent = await sendVerificationEmail(email, verificationCode)
+
+            if (!emailSent) {
+                console.error('Failed to send verification email')
                 // Don't fail registration if email fails - user can try again
                 // For now, we'll still redirect to verification page
             }
