@@ -67,7 +67,7 @@ export async function register(prevState: string | undefined, formData: FormData
             },
         })
 
-        // Send verification code using Mailgun (non-blocking)
+        // Send verification code using Mailgun
         try {
             // Generate verification code
             const verificationCode = generateVerificationCode()
@@ -82,13 +82,12 @@ export async function register(prevState: string | undefined, formData: FormData
                 }
             })
 
-            // Send email with verification code (fire and forget - don't block registration)
-            sendVerificationEmail(email, verificationCode).catch((emailError) => {
-                console.error('Email sending error (non-blocking):', emailError)
-            })
+            // Send email with verification code (await to ensure it completes in serverless)
+            await sendVerificationEmail(email, verificationCode)
+            console.log(`[REGISTRATION] Verification email sent to ${email}`)
         } catch (emailError) {
-            console.error('Email setup error (non-blocking):', emailError)
-            // Continue with registration even if email setup fails
+            console.error('[REGISTRATION] Email setup/sending error (non-blocking):', emailError)
+            // Continue with registration even if email fails
         }
 
         // Always return success - UI will handle redirect to verification page
