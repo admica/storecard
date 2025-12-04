@@ -2,27 +2,52 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { searchLogos } from '@/app/lib/actions'
+import { extractColorsFromImage } from '@/app/lib/color-utils'
 
 interface LogoResult {
     source: 'cache' | 'api' | 'fallback'
     url: string
     name: string
+    colorLight?: string | null
+    colorDark?: string | null
+}
+
+interface LogoSelection {
+    url: string
+    colorLight?: string | null
+    colorDark?: string | null
 }
 
 interface LogoPickerProps {
     initialLogo?: string | null
+    initialColorLight?: string | null
+    initialColorDark?: string | null
     searchTerm: string
-    onSelect: (logoUrl: string) => void
+    onSelect: (selection: LogoSelection) => void
     isOpen: boolean
     onOpenChange: (isOpen: boolean) => void
 }
 
-export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, onOpenChange }: LogoPickerProps) {
+export default function LogoPicker({ 
+    initialLogo, 
+    initialColorLight,
+    initialColorDark,
+    searchTerm, 
+    onSelect, 
+    isOpen, 
+    onOpenChange 
+}: LogoPickerProps) {
     const [query, setQuery] = useState(searchTerm)
     const [results, setResults] = useState<LogoResult[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [isExtractingColor, setIsExtractingColor] = useState(false)
     const [selectedLogo, setSelectedLogo] = useState<string | null>(initialLogo || null)
+    const [selectedColors, setSelectedColors] = useState<{ colorLight?: string | null; colorDark?: string | null }>({
+        colorLight: initialColorLight,
+        colorDark: initialColorDark,
+    })
     const modalRef = useRef<HTMLDivElement>(null)
+    const imageRefs = useRef<Map<string, HTMLImageElement>>(new Map())
 
     // Update query when searchTerm changes, but only if modal is closed
     useEffect(() => {
@@ -47,6 +72,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
         if (!query) return
 
         setIsLoading(true)
+        imageRefs.current.clear() // Clear refs when searching
         try {
             const logos = await searchLogos(query)
             setResults(logos)
@@ -62,19 +88,64 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
         if (isOpen && query) {
             handleSearch()
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
-    const handleSelect = (logoUrl: string) => {
-        setSelectedLogo(logoUrl)
-        onSelect(logoUrl)
+    const handleSelect = async (logo: LogoResult, imgElement: HTMLImageElement | null) => {
+        setIsExtractingColor(true)
+        
+        let colorLight = logo.colorLight
+        let colorDark = logo.colorDark
+        
+        // If no cached colors, extract from the image
+        if (!colorLight && !colorDark && imgElement) {
+            try {
+                // Ensure image is loaded with crossOrigin for color extraction
+                const img = new Image()
+                img.crossOrigin = 'anonymous'
+                img.src = logo.url
+                
+                await new Promise<void>((resolve, reject) => {
+                    img.onload = () => resolve()
+                    img.onerror = () => reject(new Error('Image failed to load'))
+                    // If already loaded
+                    if (img.complete) resolve()
+                })
+                
+                const colors = await extractColorsFromImage(img)
+                if (colors) {
+                    colorLight = colors.colorLight
+                    colorDark = colors.colorDark
+                }
+            } catch (error) {
+                console.error('Color extraction failed:', error)
+                // Continue without colors - will use fallback gradient
+            }
+        }
+        
+        setSelectedLogo(logo.url)
+        setSelectedColors({ colorLight, colorDark })
+        onSelect({ url: logo.url, colorLight, colorDark })
+        setIsExtractingColor(false)
         onOpenChange(false)
+    }
+
+    const handleClear = () => {
+        setSelectedLogo(null)
+        setSelectedColors({ colorLight: null, colorDark: null })
+        onSelect({ url: '', colorLight: null, colorDark: null })
     }
 
     return (
         <div className="relative">
             <div className="flex items-center space-x-3">
                 {selectedLogo ? (
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border dark:border-border bg-surface dark:bg-surface-elevated p-1">
+                    <div 
+                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border dark:border-border p-1"
+                        style={{
+                            backgroundColor: selectedColors.colorLight || undefined,
+                        }}
+                    >
                         <img
                             src={selectedLogo}
                             alt="Selected logo"
@@ -86,10 +157,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                         />
                         <button
                             type="button"
-                            onClick={() => {
-                                setSelectedLogo(null)
-                                onSelect('')
-                            }}
+                            onClick={handleClear}
                             className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 hover:opacity-100 transition-opacity rounded-full"
                             aria-label="Remove selected logo"
                         >
@@ -148,7 +216,7 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                                 />
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || isExtractingColor}
                                     className="rounded-xl bg-gradient-to-r from-accent to-accent-light px-5 py-2.5 text-sm font-medium text-white hover:shadow-lg hover:shadow-accent/25 disabled:opacity-50 transition-all"
                                 >
                                     {isLoading ? (
@@ -162,24 +230,50 @@ export default function LogoPicker({ initialLogo, searchTerm, onSelect, isOpen, 
                                 </button>
                             </form>
 
+                            {isExtractingColor && (
+                                <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-xl flex items-center">
+                                    <svg className="animate-spin h-4 w-4 mr-2 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <p className="text-sm text-accent font-medium">Extracting brand colors...</p>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1">
                                 {results.map((logo, index) => (
                                     <button
                                         key={`${logo.source}-${index}`}
                                         type="button"
-                                        onClick={() => handleSelect(logo.url)}
-                                        className="group relative aspect-square flex items-center justify-center rounded-xl border border-border-light dark:border-border bg-surface dark:bg-surface-elevated p-2 hover:border-accent hover:shadow-md transition-all"
+                                        onClick={(e) => {
+                                            const img = (e.currentTarget as HTMLElement).querySelector('img')
+                                            handleSelect(logo, img)
+                                        }}
+                                        disabled={isExtractingColor}
+                                        className="group relative aspect-square flex items-center justify-center rounded-xl border border-border-light dark:border-border bg-surface dark:bg-surface-elevated p-2 hover:border-accent hover:shadow-md transition-all disabled:opacity-50"
                                     >
                                         <img
                                             src={logo.url}
                                             alt={logo.name}
+                                            crossOrigin="anonymous"
                                             className="max-h-full max-w-full object-contain"
+                                            ref={(el) => {
+                                                if (el) imageRefs.current.set(logo.url, el)
+                                            }}
                                         />
                                         {logo.source === 'cache' && (
                                             <span 
                                                 className="absolute top-1 right-1 h-2 w-2 rounded-full bg-success" 
                                                 title="From Cache"
                                                 aria-label="Cached logo"
+                                            />
+                                        )}
+                                        {logo.colorLight && (
+                                            <span 
+                                                className="absolute bottom-1 right-1 h-3 w-3 rounded-full border border-white shadow-sm" 
+                                                style={{ backgroundColor: logo.colorLight }}
+                                                title="Brand color"
+                                                aria-label="Has brand color"
                                             />
                                         )}
                                     </button>

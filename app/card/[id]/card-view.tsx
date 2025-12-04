@@ -13,7 +13,10 @@ interface CardViewProps {
         image: string | null
         logo: string | null
         note: string | null
+        colorLight: string | null
+        colorDark: string | null
     }
+    isDarkMode?: boolean
 }
 
 function getGradient(name: string) {
@@ -29,7 +32,7 @@ function getGradient(name: string) {
     return gradients[index]
 }
 
-export default function CardView({ card }: CardViewProps) {
+export default function CardView({ card, isDarkMode = false }: CardViewProps) {
     const [isFullscreen, setIsFullscreen] = useState(false)
 
     useEffect(() => {
@@ -40,6 +43,12 @@ export default function CardView({ card }: CardViewProps) {
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen)
     }
+
+    // Determine if we have custom colors
+    const hasCustomColors = card.colorLight && card.colorDark
+    const backgroundColor = hasCustomColors 
+        ? (isDarkMode ? card.colorDark : card.colorLight)
+        : null
 
     if (isFullscreen) {
         return (
@@ -73,19 +82,30 @@ export default function CardView({ card }: CardViewProps) {
 
     return (
         <main className="flex flex-1 flex-col items-center pt-24 px-6 pb-10">
-            <div className={`w-full max-w-sm rounded-3xl bg-gradient-to-br ${getGradient(card.retailer)} p-8 shadow-2xl text-white mb-8 relative overflow-hidden`}>
+            <div 
+                className={`w-full max-w-sm rounded-3xl p-8 shadow-2xl text-white mb-8 relative overflow-hidden ${
+                    hasCustomColors ? '' : `bg-gradient-to-br ${getGradient(card.retailer)}`
+                }`}
+                style={hasCustomColors ? { backgroundColor: backgroundColor! } : undefined}
+            >
                 <div className="absolute top-0 right-0 -mt-8 -mr-8 h-40 w-40 rounded-full bg-white/20 blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-40 w-40 rounded-full bg-black/10 blur-3xl"></div>
 
                 <div className="relative z-10 flex flex-col h-48 justify-between">
                     <div className="flex justify-between items-start">
-                        <h1 className="text-3xl font-bold tracking-tight">{card.retailer}</h1>
+                        <h1 className={`text-3xl font-bold tracking-tight ${
+                            hasCustomColors && !isDarkMode ? 'text-gray-800' : 'text-white'
+                        }`}>{card.retailer}</h1>
                         {card.logo ? (
                             <div className="h-24 w-24 rounded-2xl bg-white p-2 flex items-center justify-center overflow-hidden shadow-lg">
                                 <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                             </div>
                         ) : (
-                            <div className="h-24 w-24 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl font-bold">
+                            <div className={`h-24 w-24 rounded-2xl backdrop-blur-md flex items-center justify-center text-4xl font-bold ${
+                                hasCustomColors && !isDarkMode 
+                                    ? 'bg-gray-800/10 text-gray-800' 
+                                    : 'bg-white/20 text-white'
+                            }`}>
                                 {card.retailer[0].toUpperCase()}
                             </div>
                         )}
@@ -93,9 +113,13 @@ export default function CardView({ card }: CardViewProps) {
 
                     <div>
                         {card.note && (
-                            <p className="text-white/80 font-medium mb-1">{card.note}</p>
+                            <p className={`font-medium mb-1 ${
+                                hasCustomColors && !isDarkMode ? 'text-gray-700' : 'text-white/80'
+                            }`}>{card.note}</p>
                         )}
-                        <p className="text-sm text-white/60 uppercase tracking-widest">Loyalty Card</p>
+                        <p className={`text-sm uppercase tracking-widest ${
+                            hasCustomColors && !isDarkMode ? 'text-gray-500' : 'text-white/60'
+                        }`}>Loyalty Card</p>
                     </div>
                 </div>
             </div>

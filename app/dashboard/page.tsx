@@ -40,6 +40,13 @@ export default async function Dashboard() {
         redirect('/login')
     }
 
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { darkMode: true }
+    })
+
+    const isDarkMode = user?.darkMode || false
+
     const cards = await prisma.card.findMany({
         where: {
             user: {
@@ -84,42 +91,64 @@ export default async function Dashboard() {
                     </div>
                 ) : (
                     <div className="grid gap-4">
-                        {cards.map((card, index) => (
-                            <Link
-                                key={card.id}
-                                href={`/card/${card.id}`}
-                                className="group relative overflow-hidden rounded-2xl bg-surface dark:bg-surface p-6 card-shadow dark:card-shadow-dark border border-border-light dark:border-border transition-all hover:scale-[1.02] hover:card-shadow-hover dark:hover:card-shadow-dark-hover active:scale-[0.98] animate-enter"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                {/* Decorative Gradient Background */}
-                                <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 dark:opacity-30 blur-2xl group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity`} />
+                        {cards.map((card, index) => {
+                            const hasCustomColors = card.colorLight && card.colorDark
+                            const decorativeColor = hasCustomColors 
+                                ? (isDarkMode ? card.colorDark : card.colorLight)
+                                : null
+                            
+                            return (
+                                <Link
+                                    key={card.id}
+                                    href={`/card/${card.id}`}
+                                    className="group relative overflow-hidden rounded-2xl bg-surface dark:bg-surface p-6 card-shadow dark:card-shadow-dark border border-border-light dark:border-border transition-all hover:scale-[1.02] hover:card-shadow-hover dark:hover:card-shadow-dark-hover active:scale-[0.98] animate-enter"
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                    {/* Decorative Background */}
+                                    {hasCustomColors ? (
+                                        <div 
+                                            className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full opacity-40 dark:opacity-50 blur-2xl group-hover:opacity-50 dark:group-hover:opacity-60 transition-opacity"
+                                            style={{ backgroundColor: decorativeColor! }}
+                                        />
+                                    ) : (
+                                        <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 dark:opacity-30 blur-2xl group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity`} />
+                                    )}
 
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-primary tracking-tight">{card.retailer}</h3>
-                                        {card.note && (
-                                            <p className="text-sm text-muted mt-1 truncate pr-4">{card.note}</p>
+                                    <div className="relative z-10 flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <h3 className="text-xl font-bold text-primary tracking-tight">{card.retailer}</h3>
+                                            {card.note && (
+                                                <p className="text-sm text-muted mt-1 truncate pr-4">{card.note}</p>
+                                            )}
+                                        </div>
+                                        {card.logo ? (
+                                            <div 
+                                                className="h-16 w-16 rounded-xl p-2 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden"
+                                                style={hasCustomColors ? { backgroundColor: decorativeColor! } : undefined}
+                                            >
+                                                <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
+                                            </div>
+                                        ) : (
+                                            <div 
+                                                className={`h-16 w-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-sm ${
+                                                    hasCustomColors ? '' : `bg-gradient-to-br ${getGradient(card.retailer)}`
+                                                }`}
+                                                style={hasCustomColors ? { backgroundColor: decorativeColor! } : undefined}
+                                            >
+                                                {card.retailer[0].toUpperCase()}
+                                            </div>
                                         )}
                                     </div>
-                                    {card.logo ? (
-                                        <div className="h-16 w-16 rounded-xl bg-surface dark:bg-surface-elevated p-2 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden">
-                                            <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
-                                        </div>
-                                    ) : (
-                                        <div className={`h-16 w-16 rounded-xl bg-gradient-to-br ${getGradient(card.retailer)} flex items-center justify-center text-white font-bold text-2xl shadow-sm`}>
-                                            {card.retailer[0].toUpperCase()}
-                                        </div>
-                                    )}
-                                </div>
 
-                                <div className="relative z-10 mt-6 flex items-end justify-between">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Last Used</span>
-                                        <span className="text-xs font-semibold text-primary mt-0.5">{formatRelativeTime(card.lastUsed)}</span>
+                                    <div className="relative z-10 mt-6 flex items-end justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Last Used</span>
+                                            <span className="text-xs font-semibold text-primary mt-0.5">{formatRelativeTime(card.lastUsed)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </Link>
-                        ))}
+                                </Link>
+                            )
+                        })}
                     </div>
                 )}
             </main>

@@ -21,6 +21,11 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
         notFound()
     }
 
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { darkMode: true }
+    })
+
     return (
         <div className="flex min-h-screen flex-col bg-background pb-safe">
             <header className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-center">
@@ -58,7 +63,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
                 </div>
             </header>
 
-            <CardView card={card} />
+            <CardView card={card} isDarkMode={user?.darkMode || false} />
         </div>
     )
 }

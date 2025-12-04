@@ -21,6 +21,8 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
     const [scanError, setScanError] = useState<string | null>(null)
     const [retailerName, setRetailerName] = useState(card.retailer || '')
     const [selectedLogo, setSelectedLogo] = useState<string | null>(card.logo || null)
+    const [selectedColorLight, setSelectedColorLight] = useState<string | null>(card.colorLight || null)
+    const [selectedColorDark, setSelectedColorDark] = useState<string | null>(card.colorDark || null)
     const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -243,8 +245,14 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
                         </label>
                         <LogoPicker
                             searchTerm={retailerName}
-                            onSelect={setSelectedLogo}
+                            onSelect={(selection) => {
+                                setSelectedLogo(selection.url || null)
+                                setSelectedColorLight(selection.colorLight || null)
+                                setSelectedColorDark(selection.colorDark || null)
+                            }}
                             initialLogo={selectedLogo}
+                            initialColorLight={selectedColorLight}
+                            initialColorDark={selectedColorDark}
                             isOpen={isLogoPickerOpen}
                             onOpenChange={setIsLogoPickerOpen}
                         />
@@ -260,6 +268,8 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
                         placeholder="e.g. Starbucks"
                     />
                     <input type="hidden" name="logo" value={selectedLogo || ''} />
+                    <input type="hidden" name="colorLight" value={selectedColorLight || ''} />
+                    <input type="hidden" name="colorDark" value={selectedColorDark || ''} />
                 </div>
 
                 <div>

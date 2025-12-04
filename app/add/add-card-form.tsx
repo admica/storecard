@@ -21,6 +21,8 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
     const [scanError, setScanError] = useState<string | null>(null)
     const [retailerName, setRetailerName] = useState('')
     const [selectedLogo, setSelectedLogo] = useState<string | null>(null)
+    const [selectedColorLight, setSelectedColorLight] = useState<string | null>(null)
+    const [selectedColorDark, setSelectedColorDark] = useState<string | null>(null)
     const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const imageFileInputRef = useRef<HTMLInputElement>(null)
@@ -261,7 +263,11 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
                             </label>
                             <LogoPicker
                                 searchTerm={retailerName}
-                                onSelect={setSelectedLogo}
+                                onSelect={(selection) => {
+                                    setSelectedLogo(selection.url || null)
+                                    setSelectedColorLight(selection.colorLight || null)
+                                    setSelectedColorDark(selection.colorDark || null)
+                                }}
                                 initialLogo={null}
                                 isOpen={isLogoPickerOpen}
                                 onOpenChange={setIsLogoPickerOpen}
@@ -279,6 +285,8 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
                             placeholder="e.g. Starbucks"
                         />
                         <input type="hidden" name="logo" value={selectedLogo || ''} />
+                        <input type="hidden" name="colorLight" value={selectedColorLight || ''} />
+                        <input type="hidden" name="colorDark" value={selectedColorDark || ''} />
                     </div>
 
                     <div>

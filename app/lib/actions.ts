@@ -90,6 +90,8 @@ export async function createCard(prevState: string | undefined, formData: FormDa
     const barcodeFormat = formData.get('barcodeFormat') as string
     const imageFile = formData.get('image') as File
     const logo = formData.get('logo') as string
+    const colorLight = formData.get('colorLight') as string
+    const colorDark = formData.get('colorDark') as string
 
     if (!retailer) {
         return 'Retailer name is required'
@@ -116,11 +118,13 @@ export async function createCard(prevState: string | undefined, formData: FormDa
             note,
             image: imagePath,
             logo: logo || null,
+            colorLight: colorLight || null,
+            colorDark: colorDark || null,
             userId: user.id,
         },
     })
 
-    // Cache logo if provided
+    // Cache logo and colors if provided
     if (logo) {
         const normalizedName = retailer.toLowerCase().trim()
             .replace(/\s+(store|inc|llc|ltd|corp|corporation)$/g, '')
@@ -129,8 +133,17 @@ export async function createCard(prevState: string | undefined, formData: FormDa
         try {
             await prisma.brandLogo.upsert({
                 where: { name: normalizedName },
-                update: { logoUrl: logo },
-                create: { name: normalizedName, logoUrl: logo }
+                update: { 
+                    logoUrl: logo,
+                    ...(colorLight ? { colorLight } : {}),
+                    ...(colorDark ? { colorDark } : {}),
+                },
+                create: { 
+                    name: normalizedName, 
+                    logoUrl: logo,
+                    colorLight: colorLight || null,
+                    colorDark: colorDark || null,
+                }
             })
         } catch (e) {
             console.error('Failed to cache logo:', e)
@@ -169,6 +182,8 @@ export async function updateCard(id: string, prevState: string | undefined, form
     const barcodeFormat = formData.get('barcodeFormat') as string
     const imageFile = formData.get('image') as File
     const logo = formData.get('logo') as string
+    const colorLight = formData.get('colorLight') as string
+    const colorDark = formData.get('colorDark') as string
 
     if (!retailer) {
         return 'Retailer name is required'
@@ -205,10 +220,12 @@ export async function updateCard(id: string, prevState: string | undefined, form
             barcodeFormat,
             image: imagePath,
             ...(logo ? { logo } : {}),
+            ...(colorLight ? { colorLight } : {}),
+            ...(colorDark ? { colorDark } : {}),
         },
     })
 
-    // Cache logo if provided
+    // Cache logo and colors if provided
     if (logo) {
         const normalizedName = retailer.toLowerCase().trim()
             .replace(/\s+(store|inc|llc|ltd|corp|corporation)$/g, '')
@@ -217,8 +234,17 @@ export async function updateCard(id: string, prevState: string | undefined, form
         try {
             await prisma.brandLogo.upsert({
                 where: { name: normalizedName },
-                update: { logoUrl: logo },
-                create: { name: normalizedName, logoUrl: logo }
+                update: { 
+                    logoUrl: logo,
+                    ...(colorLight ? { colorLight } : {}),
+                    ...(colorDark ? { colorDark } : {}),
+                },
+                create: { 
+                    name: normalizedName, 
+                    logoUrl: logo,
+                    colorLight: colorLight || null,
+                    colorDark: colorDark || null,
+                }
             })
         } catch (e) {
             console.error('Failed to cache logo:', e)
@@ -288,13 +314,21 @@ export async function searchLogos(query: string) {
         where: { name: normalizedQuery }
     })
 
-    const results: { source: 'cache' | 'api' | 'fallback'; url: string; name: string }[] = []
+    const results: { 
+        source: 'cache' | 'api' | 'fallback'; 
+        url: string; 
+        name: string;
+        colorLight?: string | null;
+        colorDark?: string | null;
+    }[] = []
 
     if (cachedLogo) {
         results.push({
             source: 'cache',
             url: cachedLogo.logoUrl,
-            name: query // Use original query as display name
+            name: query, // Use original query as display name
+            colorLight: cachedLogo.colorLight,
+            colorDark: cachedLogo.colorDark,
         })
     }
 
