@@ -476,3 +476,4 @@ When extending the subscription system:
 3. Update API documentation
 4. Test webhook handling for new events
 5. Ensure session data includes new subscription fields
+

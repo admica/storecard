@@ -6,3 +6,4 @@ ALTER TABLE "Card" ADD COLUMN "colorDark" TEXT;
 ALTER TABLE "BrandLogo" ADD COLUMN "colorLight" TEXT;
 ALTER TABLE "BrandLogo" ADD COLUMN "colorDark" TEXT;
 
+

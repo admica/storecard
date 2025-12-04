@@ -67,22 +67,26 @@ export async function register(prevState: string | undefined, formData: FormData
             },
         })
 
-        // Send verification code
+        // Send verification code using our Resend API
         try {
-            const { error } = await supabaseAdmin.auth.signInWithOtp({
-                email,
-                options: {
-                    shouldCreateUser: false,
-                }
+            // Use relative URL since we're on the same origin
+            const response = await fetch('/api/auth/send-verification-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
             })
 
-            if (error) {
-                console.error('Error sending verification code:', error)
+            const result = await response.json()
+
+            if (!response.ok) {
+                console.error('Error sending verification code:', result.error)
                 // Don't fail registration if email fails - user can try again
                 // For now, we'll still redirect to verification page
             }
         } catch (emailError) {
-            console.error('Supabase email error:', emailError)
+            console.error('Email sending error:', emailError)
             // Continue with registration even if email fails
         }
 
