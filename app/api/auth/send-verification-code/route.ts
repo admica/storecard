@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
+import { generateVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,9 +15,28 @@ export async function POST(request: NextRequest) {
 
     // Generate verification code
     const verificationCode = generateVerificationCode()
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    // Store code temporarily with expiry
-    storeVerificationCode(email, verificationCode)
+    // Store code in database
+    // We need to find the user first
+    const user = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationCode,
+        verificationCodeExpiresAt: expiresAt
+      }
+    })
 
     // Send email with verification code
     const emailSent = await sendVerificationEmail(email, verificationCode)

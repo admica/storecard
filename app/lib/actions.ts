@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
 import { SubscriptionTier } from '@prisma/client'
-import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
+import { generateVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {
@@ -71,9 +71,16 @@ export async function register(prevState: string | undefined, formData: FormData
         try {
             // Generate verification code
             const verificationCode = generateVerificationCode()
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-            // Store code temporarily with expiry
-            storeVerificationCode(email, verificationCode)
+            // Store code in database
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    verificationCode,
+                    verificationCodeExpiresAt: expiresAt
+                }
+            })
 
             // Send email with verification code (fire and forget - don't block registration)
             sendVerificationEmail(email, verificationCode).catch((emailError) => {
@@ -157,13 +164,13 @@ export async function createCard(prevState: string | undefined, formData: FormDa
         try {
             await prisma.brandLogo.upsert({
                 where: { name: normalizedName },
-                update: { 
+                update: {
                     logoUrl: logo,
                     ...(colorLight ? { colorLight } : {}),
                     ...(colorDark ? { colorDark } : {}),
                 },
-                create: { 
-                    name: normalizedName, 
+                create: {
+                    name: normalizedName,
                     logoUrl: logo,
                     colorLight: colorLight || null,
                     colorDark: colorDark || null,
@@ -258,13 +265,13 @@ export async function updateCard(id: string, prevState: string | undefined, form
         try {
             await prisma.brandLogo.upsert({
                 where: { name: normalizedName },
-                update: { 
+                update: {
                     logoUrl: logo,
                     ...(colorLight ? { colorLight } : {}),
                     ...(colorDark ? { colorDark } : {}),
                 },
-                create: { 
-                    name: normalizedName, 
+                create: {
+                    name: normalizedName,
                     logoUrl: logo,
                     colorLight: colorLight || null,
                     colorDark: colorDark || null,
@@ -338,9 +345,9 @@ export async function searchLogos(query: string) {
         where: { name: normalizedQuery }
     })
 
-    const results: { 
-        source: 'cache' | 'api' | 'fallback'; 
-        url: string; 
+    const results: {
+        source: 'cache' | 'api' | 'fallback';
+        url: string;
         name: string;
         colorLight?: string | null;
         colorDark?: string | null;

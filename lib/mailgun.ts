@@ -1,16 +1,13 @@
 import FormData from 'form-data'
 import Mailgun from 'mailgun.js'
 
-// Temporary storage for verification codes (in production, use Redis/database)
-const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
-
 // Create Mailgun client (following official example pattern)
 function getMailgunClient() {
   const apiKey = process.env.MAILGUN_API_KEY?.trim()
   if (!apiKey) {
     throw new Error('MAILGUN_API_KEY environment variable is not set')
   }
-  
+
   const mailgun = new Mailgun(FormData)
   return mailgun.client({
     username: 'api',
@@ -18,36 +15,9 @@ function getMailgunClient() {
   })
 }
 
-export { verificationCodes }
-
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
-}
-
-// Store verification code with expiry (24 hours)
-export function storeVerificationCode(email: string, code: string): void {
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-  verificationCodes.set(email, { code, expiresAt })
-}
-
-// Verify a code
-export function verifyCode(email: string, code: string): boolean {
-  const stored = verificationCodes.get(email)
-  if (!stored) return false
-
-  // Check if expired
-  if (stored.expiresAt < new Date()) {
-    verificationCodes.delete(email)
-    return false
-  }
-
-  // Check if code matches
-  if (stored.code !== code) return false
-
-  // Code is valid, remove it (one-time use)
-  verificationCodes.delete(email)
-  return true
 }
 
 // Send verification email
@@ -74,7 +44,7 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       console.error('[MAILGUN] Failed to create client:', clientError)
       return false
     }
-    
+
     console.log(`[MAILGUN] Sending email to ${email} using domain ${domain}`)
     console.log(`[MAILGUN] From: ${fromEmail}`)
 

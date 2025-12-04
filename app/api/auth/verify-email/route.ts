@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyCode } from '@/lib/mailgun'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
@@ -13,32 +12,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify the code using our Mailgun implementation
-    const isValidCode = verifyCode(email, code)
-
-    if (!isValidCode) {
-      return NextResponse.json(
-        { error: 'Invalid or expired verification code' },
-        { status: 400 }
-      )
-    }
-
-    // Mark user as email verified in our database
-    // const { data, error } = await supabaseAdmin.auth.verifyOtp({
-    //   email,
-    //   token: code,
-    //   type: 'email'
-    // })
-    //
-    // if (error) {
-    //   console.error('Error verifying code:', error)
-    //   return NextResponse.json(
-    //     { error: 'Invalid or expired verification code' },
-    //     { status: 400 }
-    //   )
-    // }
-
-    // Mark user as email verified in our database
+    // Verify the code against database
     const user = await prisma.user.findUnique({
       where: { email }
     })
@@ -50,9 +24,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if code matches and is not expired
+    if (!user.verificationCode || user.verificationCode !== code) {
+      return NextResponse.json(
+        { error: 'Invalid verification code' },
+        { status: 400 }
+      )
+    }
+
+    if (user.verificationCodeExpiresAt && user.verificationCodeExpiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'Verification code expired' },
+        { status: 400 }
+      )
+    }
+
+    // Clear verification code after successful use
     await prisma.user.update({
       where: { id: user.id },
       data: {
+        verificationCode: null,
+        verificationCodeExpiresAt: null,
         emailVerified: true,
         emailVerifiedAt: new Date(),
       }

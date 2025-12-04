@@ -38,6 +38,8 @@ model User {
   emailVerifiedAt        DateTime?
   verificationAttempts   Int           @default(0)
   lastVerificationAttempt DateTime?
+  verificationCode       String?
+  verificationCodeExpiresAt DateTime?
   onboardingComplete     Boolean       @default(false)
   subscriptionSelected   Boolean       @default(false)
   createdAt              DateTime      @default(now())
