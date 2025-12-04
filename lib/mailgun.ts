@@ -65,7 +65,7 @@ export async function sendVerificationEmail(email: string, code: string): Promis
   }
 
   const domain = process.env.MAILGUN_DOMAIN!
-  const fromEmail = `StoreCard <postmaster@${domain}>`
+  const fromEmail = `StoreCard <postmaster@${domain}>` // Format: "Name <email@domain>"
 
   try {
     console.log(`[MAILGUN] Attempting to send email to ${email} using domain ${domain}`)
@@ -82,8 +82,19 @@ export async function sendVerificationEmail(email: string, code: string): Promis
 
     const result = await mailgunClient.messages.create(domain, {
       from: fromEmail,
-      to: [email],
+      to: [`${email}`], // Format as array of strings like Mailgun example
       subject: 'Verify Your StoreCard Account',
+      text: `Welcome to StoreCard!
+
+Thanks for signing up! To complete your registration, please use the verification code below:
+
+${code}
+
+This code will expire in 24 hours.
+
+If you didn't create an account, you can safely ignore this email.
+
+StoreCard - Organize your loyalty cards in one place`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #333; text-align: center;">Welcome to StoreCard!</h1>
@@ -117,15 +128,18 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       `,
     })
 
-    console.log('[MAILGUN] Email sent successfully. Response:', JSON.stringify(result, null, 2))
+    console.log('[MAILGUN] Email sent successfully. Response:', result)
     
-    // Mailgun.js returns the result directly, check if it has an id or message
-    if (result && (result.id || result.message)) {
+    // Mailgun.js returns the result directly - if we get here without an error, it succeeded
+    // The response typically has an id or message field
+    if (result) {
+      console.log('[MAILGUN] Response ID:', result.id || 'N/A')
+      console.log('[MAILGUN] Response message:', result.message || 'N/A')
       return true
     }
     
-    // If no clear success indicator, log and return false
-    console.warn('[MAILGUN] Unexpected response format:', result)
+    // If result is null/undefined, something went wrong
+    console.warn('[MAILGUN] No response data returned')
     return false
   } catch (error: any) {
     console.error('[MAILGUN] Email sending exception:', error)
