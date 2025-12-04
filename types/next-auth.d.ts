@@ -4,6 +4,9 @@ import 'next-auth'
 declare module 'next-auth' {
   interface User {
     id: string
+    emailVerified?: boolean
+    onboardingComplete?: boolean
+    subscriptionSelected?: boolean
     subscription?: {
       tier: SubscriptionTier
       status: SubscriptionStatus

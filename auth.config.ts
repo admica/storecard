@@ -7,8 +7,24 @@ export const authConfig = {
     },
     callbacks: {
         async session({ session, token }) {
-            // Add subscription data to session
+            // Add user data including email verification status
             if (session.user?.id) {
+                const user = await prisma.user.findUnique({
+                    where: { id: session.user.id },
+                    select: {
+                        emailVerified: true,
+                        onboardingComplete: true,
+                        subscriptionSelected: true,
+                    },
+                })
+
+                if (user) {
+                    session.user.emailVerified = user.emailVerified
+                    session.user.onboardingComplete = user.onboardingComplete
+                    session.user.subscriptionSelected = user.subscriptionSelected
+                }
+
+                // Add subscription data
                 const subscription = await prisma.subscription.findUnique({
                     where: { userId: session.user.id },
                     select: {
@@ -40,14 +56,24 @@ export const authConfig = {
         },
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user
-            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/add') || nextUrl.pathname.startsWith('/card')
+            const isEmailVerified = auth?.user?.emailVerified
+            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/add') || nextUrl.pathname.startsWith('/card') || nextUrl.pathname === '/subscribe'
+            const isOnVerification = nextUrl.pathname === '/verify-email'
             const isPublic = nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register'
 
+            // If user is logged in but email not verified, redirect to verification
+            if (isLoggedIn && !isEmailVerified && !isOnVerification && !isPublic) {
+                return Response.redirect(new URL(`/verify-email?email=${encodeURIComponent(auth.user.email || '')}`, nextUrl))
+            }
+
             if (isOnDashboard) {
-                if (isLoggedIn) return true
+                if (isLoggedIn && isEmailVerified) return true
+                if (isLoggedIn && !isEmailVerified) {
+                    return Response.redirect(new URL(`/verify-email?email=${encodeURIComponent(auth.user.email || '')}`, nextUrl))
+                }
                 return false // Redirect unauthenticated users to login page
-            } else if (isLoggedIn) {
-                // Redirect logged-in users away from public pages to dashboard
+            } else if (isLoggedIn && isEmailVerified) {
+                // Redirect logged-in verified users away from public pages to dashboard
                 if (isPublic) {
                     return Response.redirect(new URL('/dashboard', nextUrl))
                 }
