@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
+import { SubscriptionTier } from '@prisma/client'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {
@@ -49,10 +50,18 @@ export async function register(prevState: string | undefined, formData: FormData
     const hashedPassword = await bcrypt.hash(password, 10)
 
     try {
-        await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
+            },
+        })
+
+        // Create default FREE subscription for new user
+        await prisma.subscription.create({
+            data: {
+                userId: user.id,
+                tier: SubscriptionTier.FREE,
             },
         })
     } catch (error) {

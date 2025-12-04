@@ -11,15 +11,46 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum SubscriptionTier {
+  FREE
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  nerdMode  Boolean  @default(false)
-  darkMode  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cards     Card[]
+  id            String        @id @default(cuid())
+  email         String        @unique
+  password      String
+  nerdMode      Boolean       @default(false)
+  darkMode      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  cards         Card[]
+  subscription  Subscription?
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  userId              String             @unique
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier                SubscriptionTier   @default(FREE)
+  status              SubscriptionStatus @default(INACTIVE)
+  stripeCustomerId    String?            // Stripe customer ID
+  stripeSubscriptionId String?           // Stripe subscription ID
+  currentPeriodEnd    DateTime?          // When current subscription period ends
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 }
 
 model Card {
