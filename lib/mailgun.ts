@@ -73,6 +73,13 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     console.log(`[MAILGUN] API Key present: ${!!process.env.MAILGUN_API_KEY}`)
     console.log(`[MAILGUN] Domain: ${domain}`)
 
+    console.log('[MAILGUN] Calling messages.create with:', {
+      domain,
+      from: fromEmail,
+      to: [email],
+      subject: 'Verify Your StoreCard Account',
+    })
+
     const result = await mailgunClient.messages.create(domain, {
       from: fromEmail,
       to: [email],
@@ -111,7 +118,15 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     })
 
     console.log('[MAILGUN] Email sent successfully. Response:', JSON.stringify(result, null, 2))
-    return true
+    
+    // Mailgun.js returns the result directly, check if it has an id or message
+    if (result && (result.id || result.message)) {
+      return true
+    }
+    
+    // If no clear success indicator, log and return false
+    console.warn('[MAILGUN] Unexpected response format:', result)
+    return false
   } catch (error: any) {
     console.error('[MAILGUN] Email sending exception:', error)
     if (error instanceof Error) {
@@ -124,6 +139,18 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     }
     if (error?.body) {
       console.error('[MAILGUN] Error body:', JSON.stringify(error.body, null, 2))
+    }
+    if (error?.status) {
+      console.error('[MAILGUN] Error status:', error.status)
+    }
+    if (error?.statusCode) {
+      console.error('[MAILGUN] Error statusCode:', error.statusCode)
+    }
+    // Try to get the full error as JSON
+    try {
+      console.error('[MAILGUN] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    } catch (e) {
+      console.error('[MAILGUN] Could not stringify error object')
     }
     return false
   }
