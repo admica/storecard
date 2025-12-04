@@ -4,23 +4,24 @@ import { useFormState, useFormStatus } from 'react-dom'
 import { register } from '@/app/lib/actions'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function Page() {
     const [errorMessage, dispatch] = useFormState(register, undefined)
     const router = useRouter()
     const formRef = useRef<HTMLFormElement>(null)
+    const [email, setEmail] = useState('')
 
     // Handle successful registration redirect
     useEffect(() => {
-        if (errorMessage === 'success' && formRef.current) {
-            const formData = new FormData(formRef.current)
-            const email = formData.get('email') as string
-            if (email) {
-                router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+        if (errorMessage === 'success') {
+            // Use stored email or try to get from form
+            const emailToUse = email || (formRef.current ? (new FormData(formRef.current).get('email') as string) : '')
+            if (emailToUse) {
+                router.push(`/verify-email?email=${encodeURIComponent(emailToUse)}`)
             }
         }
-    }, [errorMessage, router])
+    }, [errorMessage, router, email])
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -55,6 +56,8 @@ export default function Page() {
                             type="email"
                             autoComplete="email"
                             required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="block w-full rounded-xl border border-border dark:border-border bg-background dark:bg-surface-elevated px-4 py-3 text-primary placeholder-muted shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all text-sm"
                             placeholder="you@example.com"
                         />

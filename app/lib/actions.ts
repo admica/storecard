@@ -67,7 +67,7 @@ export async function register(prevState: string | undefined, formData: FormData
             },
         })
 
-        // Send verification code using Resend
+        // Send verification code using Mailgun (non-blocking)
         try {
             // Generate verification code
             const verificationCode = generateVerificationCode()
@@ -75,20 +75,17 @@ export async function register(prevState: string | undefined, formData: FormData
             // Store code temporarily with expiry
             storeVerificationCode(email, verificationCode)
 
-            // Send email with verification code
-            const emailSent = await sendVerificationEmail(email, verificationCode)
-
-            if (!emailSent) {
-                console.error('Failed to send verification email')
-                // Don't fail registration if email fails - user can try again
-                // For now, we'll still redirect to verification page
-            }
+            // Send email with verification code (fire and forget - don't block registration)
+            sendVerificationEmail(email, verificationCode).catch((emailError) => {
+                console.error('Email sending error (non-blocking):', emailError)
+            })
         } catch (emailError) {
-            console.error('Email sending error:', emailError)
-            // Continue with registration even if email fails
+            console.error('Email setup error (non-blocking):', emailError)
+            // Continue with registration even if email setup fails
         }
 
-        // Return success - UI will handle redirect to verification page
+        // Always return success - UI will handle redirect to verification page
+        // Email sending happens asynchronously and won't block the redirect
         return 'success'
 
     } catch (error) {
