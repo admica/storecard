@@ -4,24 +4,16 @@ import Mailgun from 'mailgun.js'
 // Temporary storage for verification codes (in production, use Redis/database)
 const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
 
-// Initialize Mailgun client
-let mailgunClient: any = null
-
-if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) {
-  try {
-    const mailgun = new Mailgun(FormData)
-    mailgunClient = mailgun.client({
-      username: 'api',
-      key: process.env.MAILGUN_API_KEY,
-    })
-    console.log('[MAILGUN] Client initialized successfully')
-  } catch (error) {
-    console.error('[MAILGUN] Failed to initialize client:', error)
+// Create Mailgun client (following official example pattern)
+function getMailgunClient() {
+  if (!process.env.MAILGUN_API_KEY) {
+    throw new Error('MAILGUN_API_KEY environment variable is not set')
   }
-} else {
-  console.warn('[MAILGUN] API key or domain not configured:', {
-    hasApiKey: !!process.env.MAILGUN_API_KEY,
-    hasDomain: !!process.env.MAILGUN_DOMAIN,
+  
+  const mailgun = new Mailgun(FormData)
+  return mailgun.client({
+    username: 'api',
+    key: process.env.MAILGUN_API_KEY,
   })
 }
 
@@ -59,28 +51,22 @@ export function verifyCode(email: string, code: string): boolean {
 
 // Send verification email
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
-  if (!mailgunClient) {
-    console.error('Mailgun API key or domain not configured')
+  if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
+    console.error('[MAILGUN] API key or domain not configured')
     return false
   }
 
-  const domain = process.env.MAILGUN_DOMAIN!
-  const fromEmail = `StoreCard <postmaster@${domain}>` // Format: "Name <email@domain>"
+  const domain = process.env.MAILGUN_DOMAIN
+  const fromEmail = `StoreCard <postmaster@${domain}>`
 
   try {
-    console.log(`[MAILGUN] Attempting to send email to ${email} using domain ${domain}`)
-    console.log(`[MAILGUN] From email: ${fromEmail}`)
-    console.log(`[MAILGUN] API Key present: ${!!process.env.MAILGUN_API_KEY}`)
-    console.log(`[MAILGUN] Domain: ${domain}`)
+    // Create client on-demand (matching Mailgun example)
+    const mg = getMailgunClient()
+    
+    console.log(`[MAILGUN] Sending email to ${email} using domain ${domain}`)
 
-    console.log('[MAILGUN] Calling messages.create with:', {
-      domain,
-      from: fromEmail,
-      to: [email],
-      subject: 'Verify Your StoreCard Account',
-    })
-
-    const result = await mailgunClient.messages.create(domain, {
+    // Match the exact format from Mailgun example
+    const result = await mg.messages.create(domain, {
       from: fromEmail,
       to: [`${email}`], // Format as array of strings like Mailgun example
       subject: 'Verify Your StoreCard Account',
@@ -128,19 +114,9 @@ StoreCard - Organize your loyalty cards in one place`,
       `,
     })
 
-    console.log('[MAILGUN] Email sent successfully. Response:', result)
-    
-    // Mailgun.js returns the result directly - if we get here without an error, it succeeded
-    // The response typically has an id or message field
-    if (result) {
-      console.log('[MAILGUN] Response ID:', result.id || 'N/A')
-      console.log('[MAILGUN] Response message:', result.message || 'N/A')
-      return true
-    }
-    
-    // If result is null/undefined, something went wrong
-    console.warn('[MAILGUN] No response data returned')
-    return false
+    // If we get here without an error, the email was sent successfully
+    console.log('[MAILGUN] Email sent successfully:', result)
+    return true
   } catch (error: any) {
     console.error('[MAILGUN] Email sending exception:', error)
     if (error instanceof Error) {
