@@ -22,8 +22,15 @@ export function generateVerificationCode(): string {
 
 // Send verification email
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
+  console.log('[MAILGUN] sendVerificationEmail called for:', email)
+  console.log('[MAILGUN] MAILGUN_API_KEY exists:', !!process.env.MAILGUN_API_KEY)
+  console.log('[MAILGUN] MAILGUN_DOMAIN exists:', !!process.env.MAILGUN_DOMAIN)
+  console.log('[MAILGUN] MAILGUN_DOMAIN value:', process.env.MAILGUN_DOMAIN)
+
   if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
     console.error('[MAILGUN] API key or domain not configured')
+    console.error('[MAILGUN] API key exists:', !!process.env.MAILGUN_API_KEY)
+    console.error('[MAILGUN] Domain exists:', !!process.env.MAILGUN_DOMAIN)
     return false
   }
 
