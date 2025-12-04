@@ -6,3 +6,4 @@ ADD COLUMN     "onboardingComplete" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "subscriptionSelected" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "verificationAttempts" INTEGER NOT NULL DEFAULT 0;
 
+

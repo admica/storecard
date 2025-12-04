@@ -7,3 +7,4 @@ ALTER TABLE "BrandLogo" ADD COLUMN "colorLight" TEXT;
 ALTER TABLE "BrandLogo" ADD COLUMN "colorDark" TEXT;
 
 
+

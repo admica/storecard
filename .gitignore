@@ -30,8 +30,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# only allow example env file
-.env
+# .env is committed as a template
+# .env.local contains actual secrets and is gitignored
 
 # vercel
 .vercel
