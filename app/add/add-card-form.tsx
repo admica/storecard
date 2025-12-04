@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useZxing } from 'react-zxing'
 
 import LogoPicker from '@/components/logo-picker'
-import { preprocessImage } from '@/app/lib/image-utils'
+import { preprocessImage, getRotatedCanvases } from '@/app/lib/image-utils'
 
 export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
     const [errorMessage, dispatch] = useFormState(createCard, undefined)
@@ -77,16 +77,43 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
             const codeReader = new BrowserMultiFormatReader(hints)
             
             let result
+            let foundBarcode = false
             
-            // Try multiple detection methods for best results
+            // Method 1: Use preprocessed canvas with EXIF orientation handling
+            // This should work for most mobile photos now
             try {
-                // Method 1: Use preprocessed canvas
                 const canvas = await preprocessImage(file)
                 result = codeReader.decodeFromCanvas(canvas)
+                foundBarcode = true
             } catch {
-                // Method 2: Try decoding directly from image element
-                // This uses a different code path that might work better for some images
-                console.log('Canvas decode failed, trying image element...')
+                console.log('Initial canvas decode failed, trying rotations...')
+            }
+            
+            // Method 2: Try different rotations (in case EXIF handling didn't work)
+            // This is a fallback for edge cases where the barcode might be rotated
+            if (!foundBarcode) {
+                try {
+                    const canvas = await preprocessImage(file)
+                    const rotatedCanvases = getRotatedCanvases(canvas)
+                    
+                    for (let i = 0; i < rotatedCanvases.length; i++) {
+                        try {
+                            result = codeReader.decodeFromCanvas(rotatedCanvases[i])
+                            console.log(`Found barcode at rotation ${i * 90}°`)
+                            foundBarcode = true
+                            break
+                        } catch {
+                            // Try next rotation
+                        }
+                    }
+                } catch (e) {
+                    console.log('Rotation attempts failed:', e)
+                }
+            }
+            
+            // Method 3: Try decoding directly from image element as last resort
+            if (!foundBarcode) {
+                console.log('Trying direct image element decode...')
                 const imgElement = document.createElement('img')
                 const imgUrl = URL.createObjectURL(file)
                 imgElement.src = imgUrl
@@ -98,9 +125,14 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
                 
                 try {
                     result = await codeReader.decodeFromImageElement(imgElement)
+                    foundBarcode = true
                 } finally {
                     URL.revokeObjectURL(imgUrl)
                 }
+            }
+
+            if (!foundBarcode || !result) {
+                throw new Error('No barcode found in image')
             }
 
             // Success! Found a barcode
