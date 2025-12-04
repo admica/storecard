@@ -338,22 +338,24 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
                         />
                     </div>
 
-                    <div>
-                        <label htmlFor="image" className="block text-sm font-medium text-primary mb-1.5">
-                            Card Image (Optional)
-                        </label>
-                        <p className="text-xs text-muted mb-2">
-                            {imagePreview ? 'Image already uploaded above. Select a different file to replace it.' : 'Upload a photo of your card'}
-                        </p>
-                        <input
-                            ref={imageFileInputRef}
-                            type="file"
-                            name="image"
-                            id="image"
-                            accept="image/*"
-                            className="block w-full text-sm text-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 file:cursor-pointer file:transition-colors"
-                        />
-                    </div>
+                    {nerdMode && (
+                        <div>
+                            <label htmlFor="image" className="block text-sm font-medium text-primary mb-1.5">
+                                Card Image (Optional)
+                            </label>
+                            <p className="text-xs text-muted mb-2">
+                                {imagePreview ? 'Image already uploaded above. Select a different file to replace it.' : 'Upload a photo of your card'}
+                            </p>
+                            <input
+                                ref={imageFileInputRef}
+                                type="file"
+                                name="image"
+                                id="image"
+                                accept="image/*"
+                                className="block w-full text-sm text-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 file:cursor-pointer file:transition-colors"
+                            />
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <SubmitButton />

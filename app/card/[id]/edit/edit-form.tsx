@@ -319,24 +319,26 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="image" className="block text-sm font-medium text-primary mb-1.5">
-                        Card Image (Optional)
-                    </label>
-                    {card.image && !imagePreview && (
-                        <div className="mb-2">
-                            <img src={card.image} alt="Current card" className="h-20 object-contain rounded-lg" />
-                            <p className="text-xs text-muted mt-1">Current image</p>
-                        </div>
-                    )}
-                    <input
-                        type="file"
-                        name="image"
-                        id="image"
-                        accept="image/*"
-                        className="block w-full text-sm text-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 file:cursor-pointer file:transition-colors"
-                    />
-                </div>
+                {nerdMode && (
+                    <div>
+                        <label htmlFor="image" className="block text-sm font-medium text-primary mb-1.5">
+                            Card Image (Optional)
+                        </label>
+                        {card.image && !imagePreview && (
+                            <div className="mb-2">
+                                <img src={card.image} alt="Current card" className="h-20 object-contain rounded-lg" />
+                                <p className="text-xs text-muted mt-1">Current image</p>
+                            </div>
+                        )}
+                        <input
+                            type="file"
+                            name="image"
+                            id="image"
+                            accept="image/*"
+                            className="block w-full text-sm text-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 file:cursor-pointer file:transition-colors"
+                        />
+                    </div>
+                )}
 
                 <div className="pt-2">
                     <SubmitButton />
