@@ -16,6 +16,11 @@ export async function POST(request: NextRequest) {
     const testCode = generateVerificationCode()
     console.log(`[TEST EMAIL] Attempting to send test email to ${email} with code ${testCode}`)
 
+    // Check environment variables
+    const hasApiKey = !!process.env.MAILGUN_API_KEY
+    const hasDomain = !!process.env.MAILGUN_DOMAIN
+    const domain = process.env.MAILGUN_DOMAIN
+
     // Try to send the email
     const emailSent = await sendVerificationEmail(email, testCode)
 
@@ -32,6 +37,11 @@ export async function POST(request: NextRequest) {
         {
           error: 'Failed to send email',
           message: 'Mailgun returned false. Check server logs for details.',
+          debug: {
+            hasApiKey,
+            hasDomain,
+            domain,
+          },
         },
         { status: 500 }
       )
