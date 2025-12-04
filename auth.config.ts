@@ -19,7 +19,7 @@ export const authConfig = {
                 })
 
                 if (user) {
-                    session.user.emailVerified = user.emailVerified
+                    session.user.emailVerifiedStatus = user.emailVerified
                     session.user.onboardingComplete = user.onboardingComplete
                     session.user.subscriptionSelected = user.subscriptionSelected
                 }
@@ -56,7 +56,7 @@ export const authConfig = {
         },
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user
-            const isEmailVerified = auth?.user?.emailVerified
+            const isEmailVerified = auth?.user?.emailVerifiedStatus
             const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/add') || nextUrl.pathname.startsWith('/card') || nextUrl.pathname === '/subscribe'
             const isOnVerification = nextUrl.pathname === '/verify-email'
             const isPublic = nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register'
