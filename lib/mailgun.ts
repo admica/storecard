@@ -6,14 +6,15 @@ const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
 
 // Create Mailgun client (following official example pattern)
 function getMailgunClient() {
-  if (!process.env.MAILGUN_API_KEY) {
+  const apiKey = process.env.MAILGUN_API_KEY?.trim()
+  if (!apiKey) {
     throw new Error('MAILGUN_API_KEY environment variable is not set')
   }
   
   const mailgun = new Mailgun(FormData)
   return mailgun.client({
     username: 'api',
-    key: process.env.MAILGUN_API_KEY,
+    key: apiKey,
   })
 }
 
@@ -56,7 +57,11 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     return false
   }
 
-  const domain = process.env.MAILGUN_DOMAIN
+  const domain = process.env.MAILGUN_DOMAIN?.trim()
+  if (!domain) {
+    console.error('[MAILGUN] Domain not configured')
+    return false
+  }
   const fromEmail = `StoreCard <postmaster@${domain}>`
 
   try {
