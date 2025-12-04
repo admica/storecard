@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyCode } from '@/lib/resend'
+import { verifyCode } from '@/lib/mailgun'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify the code using our Resend implementation
+    // Verify the code using our Mailgun implementation
     const isValidCode = verifyCode(email, code)
 
     if (!isValidCode) {

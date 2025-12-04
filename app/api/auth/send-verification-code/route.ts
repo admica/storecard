@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/resend'
+import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
 
 export async function POST(request: NextRequest) {
   try {

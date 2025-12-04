@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
 import { SubscriptionTier } from '@prisma/client'
-import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/resend'
+import { generateVerificationCode, storeVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {

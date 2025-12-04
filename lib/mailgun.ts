@@ -1,11 +1,21 @@
-import { Resend } from 'resend'
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+import FormData from 'form-data'
+import Mailgun from 'mailgun.js'
 
 // Temporary storage for verification codes (in production, use Redis/database)
 const verificationCodes = new Map<string, { code: string; expiresAt: Date }>()
 
-export { resend, verificationCodes }
+// Initialize Mailgun client
+let mailgunClient: any = null
+
+if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) {
+  const mailgun = new Mailgun(FormData)
+  mailgunClient = mailgun.client({
+    username: 'api',
+    key: process.env.MAILGUN_API_KEY,
+  })
+}
+
+export { verificationCodes }
 
 // Generate a 6-digit verification code
 export function generateVerificationCode(): string {
@@ -39,15 +49,18 @@ export function verifyCode(email: string, code: string): boolean {
 
 // Send verification email
 export async function sendVerificationEmail(email: string, code: string): Promise<boolean> {
-  if (!resend) {
-    console.error('Resend API key not configured')
+  if (!mailgunClient) {
+    console.error('Mailgun API key or domain not configured')
     return false
   }
 
+  const domain = process.env.MAILGUN_DOMAIN!
+  const fromEmail = `StoreCard <postmaster@${domain}>`
+
   try {
-    const result = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: email,
+    const data = await mailgunClient.messages.create(domain, {
+      from: fromEmail,
+      to: [email],
       subject: 'Verify Your StoreCard Account',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -82,12 +95,7 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       `,
     })
 
-    if (result.error) {
-      console.error('Resend API error:', JSON.stringify(result.error, null, 2))
-      return false
-    }
-
-    console.log('Verification email sent successfully:', result.data)
+    console.log('Verification email sent successfully:', data)
     return true
   } catch (error) {
     console.error('Email sending exception:', error)
@@ -98,3 +106,4 @@ export async function sendVerificationEmail(email: string, code: string): Promis
     return false
   }
 }
+
