@@ -93,48 +93,49 @@ export default async function Dashboard() {
                     <div className="grid gap-4">
                         {cards.map((card, index) => {
                             const hasCustomColors = card.colorLight && card.colorDark
-                            const decorativeColor = hasCustomColors 
+                            const bgColor = hasCustomColors 
                                 ? (isDarkMode ? card.colorDark : card.colorLight)
                                 : null
+                            
+                            // Determine text colors based on background
+                            const textColorClass = hasCustomColors && !isDarkMode
+                                ? 'text-gray-800'
+                                : 'text-white'
+                            const mutedTextColorClass = hasCustomColors && !isDarkMode
+                                ? 'text-gray-600'
+                                : 'text-white/70'
                             
                             return (
                                 <Link
                                     key={card.id}
                                     href={`/card/${card.id}`}
-                                    className="group relative overflow-hidden rounded-2xl bg-surface dark:bg-surface p-6 card-shadow dark:card-shadow-dark border border-border-light dark:border-border transition-all hover:scale-[1.02] hover:card-shadow-hover dark:hover:card-shadow-dark-hover active:scale-[0.98] animate-enter"
-                                    style={{ animationDelay: `${index * 50}ms` }}
+                                    className={`group relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] animate-enter ${
+                                        hasCustomColors 
+                                            ? '' 
+                                            : `bg-gradient-to-br ${getGradient(card.retailer)}`
+                                    }`}
+                                    style={{ 
+                                        animationDelay: `${index * 50}ms`,
+                                        ...(hasCustomColors ? { backgroundColor: bgColor! } : {})
+                                    }}
                                 >
-                                    {/* Decorative Background */}
-                                    {hasCustomColors ? (
-                                        <div 
-                                            className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full opacity-40 dark:opacity-50 blur-2xl group-hover:opacity-50 dark:group-hover:opacity-60 transition-opacity"
-                                            style={{ backgroundColor: decorativeColor! }}
-                                        />
-                                    ) : (
-                                        <div className={`absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-gradient-to-br ${getGradient(card.retailer)} opacity-20 dark:opacity-30 blur-2xl group-hover:opacity-30 dark:group-hover:opacity-40 transition-opacity`} />
-                                    )}
+                                    {/* Decorative glow effects */}
+                                    <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+                                    <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-black/10 blur-2xl" />
 
                                     <div className="relative z-10 flex justify-between items-start">
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-primary tracking-tight">{card.retailer}</h3>
+                                            <h3 className={`text-xl font-bold tracking-tight ${textColorClass}`}>{card.retailer}</h3>
                                             {card.note && (
-                                                <p className="text-sm text-muted mt-1 truncate pr-4">{card.note}</p>
+                                                <p className={`text-sm mt-1 truncate pr-4 ${mutedTextColorClass}`}>{card.note}</p>
                                             )}
                                         </div>
                                         {card.logo ? (
-                                            <div 
-                                                className="h-16 w-16 rounded-xl p-2 shadow-sm border border-border-light dark:border-border flex items-center justify-center overflow-hidden"
-                                                style={hasCustomColors ? { backgroundColor: decorativeColor! } : undefined}
-                                            >
+                                            <div className="h-16 w-16 rounded-xl bg-white p-2 shadow-lg flex items-center justify-center overflow-hidden">
                                                 <img src={card.logo} alt={card.retailer} className="h-full w-full object-contain" />
                                             </div>
                                         ) : (
-                                            <div 
-                                                className={`h-16 w-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-sm ${
-                                                    hasCustomColors ? '' : `bg-gradient-to-br ${getGradient(card.retailer)}`
-                                                }`}
-                                                style={hasCustomColors ? { backgroundColor: decorativeColor! } : undefined}
-                                            >
+                                            <div className="h-16 w-16 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-2xl shadow-sm">
                                                 {card.retailer[0].toUpperCase()}
                                             </div>
                                         )}
@@ -142,8 +143,8 @@ export default async function Dashboard() {
 
                                     <div className="relative z-10 mt-6 flex items-end justify-between">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-medium text-muted uppercase tracking-wider">Last Used</span>
-                                            <span className="text-xs font-semibold text-primary mt-0.5">{formatRelativeTime(card.lastUsed)}</span>
+                                            <span className={`text-[10px] font-medium uppercase tracking-wider ${mutedTextColorClass}`}>Last Used</span>
+                                            <span className={`text-xs font-semibold mt-0.5 ${textColorClass}`}>{formatRelativeTime(card.lastUsed)}</span>
                                         </div>
                                     </div>
                                 </Link>
