@@ -62,6 +62,15 @@ export default async function Dashboard() {
     return (
         <div className="min-h-screen bg-background pb-32">
             <main className="px-4 pt-6 pb-6 max-w-md mx-auto space-y-4">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-xl font-semibold text-primary">Your cards</h1>
+                    <Link
+                        href="/subscribe"
+                        className="text-sm font-semibold text-accent hover:text-accent-dark transition-colors"
+                    >
+                        Upgrade
+                    </Link>
+                </div>
                 {cards.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <div className="h-20 w-20 rounded-full bg-accent/10 flex items-center justify-center mb-6">

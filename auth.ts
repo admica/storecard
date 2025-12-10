@@ -23,15 +23,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     const user = await prisma.user.findUnique({ where: { email } })
                     if (!user) return null
 
-                    // Check if email is verified before allowing login
-                    if (!user.emailVerified) {
-                        // Return user but they'll be blocked by authorization logic
-                        // This allows the session to be created but access will be restricted
-                        return { ...user, emailVerified: false }
-                    }
-
                     const passwordsMatch = await bcrypt.compare(password, user.password)
-                    if (passwordsMatch) return user
+                    if (!passwordsMatch) return null
+
+                    // Only return fields needed by NextAuth/session
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        onboardingComplete: user.onboardingComplete,
+                        subscriptionSelected: user.subscriptionSelected,
+                    }
                 }
 
                 return null

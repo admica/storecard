@@ -3,7 +3,6 @@ import 'next-auth'
 
 declare module 'next-auth' {
   interface User {
-    emailVerifiedStatus?: boolean
     onboardingComplete?: boolean
     subscriptionSelected?: boolean
     subscription?: {

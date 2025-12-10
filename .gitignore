@@ -46,6 +46,7 @@ package-lock.json
 
 # local env files
 .env*.local
+.env.vercel
 
 # databases
 *.db

@@ -13,7 +13,6 @@ type SubscriptionPayload = {
 
 type ExtendedToken = JWT & {
     id?: string
-    emailVerified?: boolean
     onboardingComplete?: boolean
     subscriptionSelected?: boolean
     subscription?: SubscriptionPayload
@@ -31,9 +30,8 @@ export const authConfig = {
 
             if (typedToken && session.user) {
                 session.user.id = typedToken.id as string
-                session.user.emailVerifiedStatus = typedToken.emailVerified as boolean
                 session.user.onboardingComplete = typedToken.onboardingComplete as boolean
-                session.user.subscriptionSelected = typedToken.subscriptionSelected as boolean
+                session.user.subscriptionSelected = Boolean(typedToken.subscriptionSelected)
 
                 if (typedToken.subscription) {
                     session.user.subscription = typedToken.subscription
@@ -49,27 +47,46 @@ export const authConfig = {
             if (user) {
                 const userData = user as {
                     id?: string
-                    emailVerified?: boolean
                     onboardingComplete?: boolean
                     subscriptionSelected?: boolean
                 }
                 if (userData.id) {
                     typedToken.id = userData.id
                 }
-                typedToken.emailVerified = userData.emailVerified
                 typedToken.onboardingComplete = userData.onboardingComplete
                 typedToken.subscriptionSelected = userData.subscriptionSelected
+
+                // Attach subscription data on initial sign-in
+                if (userData.id) {
+                    const subscription = await prisma.subscription.findUnique({
+                        where: { userId: userData.id },
+                        select: {
+                            tier: true,
+                            status: true,
+                            currentPeriodEnd: true,
+                        },
+                    })
+
+                    if (subscription) {
+                        typedToken.subscription = {
+                            tier: subscription.tier,
+                            status: subscription.status,
+                            currentPeriodEnd: subscription.currentPeriodEnd,
+                            isActive: subscription.status === 'ACTIVE',
+                            isFree: subscription.tier === 'FREE',
+                        }
+                    }
+                }
             }
 
-            // Refresh user data from database when needed
-            // This runs server-side only, not in middleware
-            if (trigger === 'update' && token.email) {
+            // Refresh user data from database when needed or when missing in token
+            const needsRefresh = trigger === 'update' || !typedToken.subscriptionSelected || !typedToken.subscription
+            if (needsRefresh && token.email) {
                 try {
                     const dbUser = await prisma.user.findUnique({
                         where: { email: token.email },
                         select: {
                             id: true,
-                            emailVerified: true,
                             onboardingComplete: true,
                             subscriptionSelected: true,
                         },
@@ -77,7 +94,6 @@ export const authConfig = {
 
                     if (dbUser) {
                         typedToken.id = dbUser.id
-                        typedToken.emailVerified = dbUser.emailVerified
                         typedToken.onboardingComplete = dbUser.onboardingComplete
                         typedToken.subscriptionSelected = dbUser.subscriptionSelected
 
@@ -110,28 +126,22 @@ export const authConfig = {
         },
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user
-            const isEmailVerified = auth?.user?.emailVerifiedStatus
-            const isOnDashboard = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/add') || nextUrl.pathname.startsWith('/card') || nextUrl.pathname === '/subscribe'
-            const isOnVerification = nextUrl.pathname === '/verify-email'
+            const hasSelectedPlan = !!auth?.user?.subscriptionSelected
+            const isOnSubscribe = nextUrl.pathname === '/subscribe'
             const isPublic = nextUrl.pathname === '/' || nextUrl.pathname === '/login' || nextUrl.pathname === '/register'
 
-            // If user is logged in but email not verified, redirect to verification
-            if (isLoggedIn && !isEmailVerified && !isOnVerification && !isPublic) {
-                return Response.redirect(new URL(`/verify-email?email=${encodeURIComponent(auth.user.email || '')}`, nextUrl))
+            if (!isLoggedIn) {
+                return isPublic
             }
 
-            if (isOnDashboard) {
-                if (isLoggedIn && isEmailVerified) return true
-                if (isLoggedIn && !isEmailVerified) {
-                    return Response.redirect(new URL(`/verify-email?email=${encodeURIComponent(auth.user.email || '')}`, nextUrl))
-                }
-                return false // Redirect unauthenticated users to login page
-            } else if (isLoggedIn && isEmailVerified) {
-                // Redirect logged-in verified users away from public pages to dashboard
-                if (isPublic) {
-                    return Response.redirect(new URL('/dashboard', nextUrl))
-                }
+            if (!hasSelectedPlan && !isOnSubscribe) {
+                return Response.redirect(new URL('/subscribe', nextUrl))
             }
+
+            if (isPublic && hasSelectedPlan) {
+                return Response.redirect(new URL('/dashboard', nextUrl))
+            }
+
             return true
         },
     },

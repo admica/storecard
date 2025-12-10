@@ -8,8 +8,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
-import { SubscriptionTier } from '@prisma/client'
-import { generateVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
+import { SubscriptionStatus, SubscriptionTier } from '@prisma/client'
 
 type ClearbitSuggestion = {
     name: string
@@ -63,7 +62,6 @@ export async function register(prevState: string | undefined, formData: FormData
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        // Create user first
         const user = await prisma.user.create({
             data: {
                 email,
@@ -71,39 +69,16 @@ export async function register(prevState: string | undefined, formData: FormData
             },
         })
 
-        // Create default FREE subscription for new user
         await prisma.subscription.create({
             data: {
                 userId: user.id,
                 tier: SubscriptionTier.FREE,
+                status: SubscriptionStatus.INACTIVE,
             },
         })
 
-        // Send verification code using Mailgun
-        try {
-            // Generate verification code
-            const verificationCode = generateVerificationCode()
-            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-
-            // Store code in database
-            await prisma.user.update({
-                where: { id: user.id },
-                data: {
-                    verificationCode,
-                    verificationCodeExpiresAt: expiresAt
-                }
-            })
-
-            // Send email with verification code (await to ensure it completes in serverless)
-            await sendVerificationEmail(email, verificationCode)
-            console.log(`[REGISTRATION] Verification email sent to ${email}`)
-        } catch (emailError) {
-            console.error('[REGISTRATION] Email setup/sending error (non-blocking):', emailError)
-            // Continue with registration even if email fails
-        }
-
-        // Always return success - UI will handle redirect to verification page
-        // Email sending happens asynchronously and won't block the redirect
+        // Sign the user in immediately so they can pick a plan
+        await signIn('credentials', { redirect: false, email, password })
         return 'success'
 
     } catch (error) {
@@ -341,6 +316,57 @@ export async function updateDarkMode(enabled: boolean) {
 
     revalidatePath('/settings')
     revalidatePath('/')
+}
+
+type PlanState = {
+    error?: string
+    success?: string
+}
+
+export async function selectPlan(prevState: PlanState | undefined, formData: FormData) {
+    const session = await auth()
+    if (!session?.user?.email) {
+        return { error: 'Not authenticated' }
+    }
+
+    const plan = (formData.get('plan') as string | null)?.toLowerCase()
+    if (!plan) {
+        return { error: 'Plan is required' }
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+    })
+
+    if (!user) {
+        return { error: 'User not found' }
+    }
+
+    if (plan !== 'free') {
+        return { error: 'Paid plans are coming soon. Choose the Free plan for now.' }
+    }
+
+    await prisma.subscription.upsert({
+        where: { userId: user.id },
+        update: {
+            tier: SubscriptionTier.FREE,
+            status: SubscriptionStatus.ACTIVE,
+        },
+        create: {
+            userId: user.id,
+            tier: SubscriptionTier.FREE,
+            status: SubscriptionStatus.ACTIVE,
+        },
+    })
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { subscriptionSelected: true },
+    })
+
+    revalidatePath('/dashboard')
+    redirect('/dashboard')
 }
 
 export async function searchLogos(query: string) {

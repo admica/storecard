@@ -15,11 +15,7 @@ export default function Page() {
     // Handle successful registration redirect
     useEffect(() => {
         if (errorMessage === 'success') {
-            // Use stored email or try to get from form
-            const emailToUse = email || (formRef.current ? (new FormData(formRef.current).get('email') as string) : '')
-            if (emailToUse) {
-                router.push(`/verify-email?email=${encodeURIComponent(emailToUse)}`)
-            }
+            router.push('/subscribe')
         }
     }, [errorMessage, router, email])
 
