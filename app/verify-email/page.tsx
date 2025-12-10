@@ -62,7 +62,7 @@ function VerifyEmailForm() {
       } else {
         setError(data.error || 'Verification failed')
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)
@@ -87,7 +87,7 @@ function VerifyEmailForm() {
         const data = await response.json()
         setError(data.error || 'Failed to resend code')
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.')
     }
   }
@@ -126,7 +126,7 @@ function VerifyEmailForm() {
             Verify Your Email
           </h2>
           <p className="mt-2 text-sm text-muted">
-            We've sent a 6-digit code to <strong>{email}</strong>
+            We&apos;ve sent a 6-digit code to <strong>{email}</strong>
           </p>
         </div>
 
@@ -181,7 +181,7 @@ function VerifyEmailForm() {
               disabled={resendCooldown > 0}
               className="text-sm text-accent hover:text-accent-dark disabled:text-muted disabled:cursor-not-allowed transition-colors"
             >
-              {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Didn't receive code? Resend"}
+              {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Didn&apos;t receive code? Resend'}
             </button>
           </div>
 

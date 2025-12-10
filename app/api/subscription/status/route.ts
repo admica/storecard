@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { SubscriptionService } from '@/lib/stripe'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
 
@@ -13,10 +13,11 @@ export async function GET(request: NextRequest) {
     const subscriptionStatus = await SubscriptionService.getSubscriptionStatus(session.user.id)
 
     return NextResponse.json(subscriptionStatus)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to get subscription status:', error)
+    const message = error instanceof Error ? error.message : 'Failed to get subscription status'
     return NextResponse.json(
-      { error: error.message || 'Failed to get subscription status' },
+      { error: message },
       { status: 500 }
     )
   }

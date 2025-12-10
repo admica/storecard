@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser'
 import { DecodeHintType } from '@zxing/library'
@@ -18,7 +19,6 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
     const [isScanning, setIsScanning] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle')
-    const [scanError, setScanError] = useState<string | null>(null)
     const [retailerName, setRetailerName] = useState('')
     const [selectedLogo, setSelectedLogo] = useState<string | null>(null)
     const [selectedColorLight, setSelectedColorLight] = useState<string | null>(null)
@@ -144,7 +144,6 @@ export default function AddCardForm({ nerdMode }: { nerdMode: boolean }) {
         } catch (error) {
             console.error('Barcode detection failed:', error)
             setScanStatus('error')
-            setScanError(error instanceof Error ? error.message : 'Unknown error')
             // User can still manually enter barcode
         }
     }

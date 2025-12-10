@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser'
 import { DecodeHintType } from '@zxing/library'
@@ -10,7 +11,19 @@ import { useZxing } from 'react-zxing'
 import LogoPicker from '@/components/logo-picker'
 import { preprocessImage, getRotatedCanvases } from '@/app/lib/image-utils'
 
-export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: boolean }) {
+type CardForEdit = {
+    id: string
+    barcodeValue?: string | null
+    barcodeFormat?: string | null
+    retailer: string
+    logo?: string | null
+    colorLight?: string | null
+    colorDark?: string | null
+    note?: string | null
+    image?: string | null
+}
+
+export default function EditCardForm({ card, nerdMode }: { card: CardForEdit; nerdMode: boolean }) {
     const updateCardWithId = updateCard.bind(null, card.id)
     const [errorMessage, dispatch] = useFormState(updateCardWithId, undefined)
     const [scannedResult, setScannedResult] = useState(card.barcodeValue || '')
@@ -18,7 +31,6 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
     const [isScanning, setIsScanning] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle')
-    const [scanError, setScanError] = useState<string | null>(null)
     const [retailerName, setRetailerName] = useState(card.retailer || '')
     const [selectedLogo, setSelectedLogo] = useState<string | null>(card.logo || null)
     const [selectedColorLight, setSelectedColorLight] = useState<string | null>(card.colorLight || null)
@@ -134,7 +146,6 @@ export default function EditCardForm({ card, nerdMode }: { card: any; nerdMode: 
         } catch (error) {
             console.error('Barcode detection failed:', error)
             setScanStatus('error')
-            setScanError(error instanceof Error ? error.message : 'Unknown error')
             // User can still manually enter barcode
         }
     }

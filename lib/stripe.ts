@@ -14,12 +14,17 @@ try {
       apiVersion: '2025-11-17.clover',
     })
   }
-} catch (error) {
+} catch {
   // Fallback for build-time
   stripe = new Stripe('sk_test_dummy', { apiVersion: '2025-11-17.clover' })
 }
 
 export { stripe }
+
+const getPeriodEndDate = (subscription: Stripe.Subscription) => {
+  const periodEnd = (subscription as { current_period_end?: number | null }).current_period_end
+  return periodEnd ? new Date(periodEnd * 1000) : null
+}
 
 // Subscription utility functions
 export class SubscriptionService {
@@ -116,12 +121,11 @@ export class SubscriptionService {
     }) as Stripe.Subscription
 
     // Update subscription status
-    const sub = stripeSubscription as any
     await prisma.subscription.update({
       where: { userId },
       data: {
         status: SubscriptionStatus.ACTIVE, // Still active until period end
-        currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+        currentPeriodEnd: getPeriodEndDate(stripeSubscription),
       },
     })
 
@@ -156,12 +160,11 @@ export class SubscriptionService {
     }) as Stripe.Subscription
 
     // Update database
-    const updatedSub = updatedSubscription as any
     await prisma.subscription.update({
       where: { userId },
       data: {
         tier: newTier,
-        currentPeriodEnd: updatedSub.current_period_end ? new Date(updatedSub.current_period_end * 1000) : null,
+        currentPeriodEnd: getPeriodEndDate(updatedSubscription),
       },
     })
 
@@ -233,14 +236,13 @@ export class SubscriptionService {
 
     const status = statusMap[stripeSubscription.status] || SubscriptionStatus.INACTIVE
 
-    const sub = stripeSubscription as any
     await prisma.subscription.update({
       where: { userId },
       data: {
-        stripeSubscriptionId: sub.id,
+        stripeSubscriptionId: stripeSubscription.id,
         status: status,
         tier: tier,
-        currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
+        currentPeriodEnd: getPeriodEndDate(stripeSubscription),
       },
     })
 

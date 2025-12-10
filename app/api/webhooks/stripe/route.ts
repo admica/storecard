@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import type { Stripe } from 'stripe'
 import { stripe, SubscriptionService } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { SubscriptionStatus } from '@prisma/client'
+
+type InvoiceWithSubscription = Stripe.Invoice & {
+  subscription?: string | Stripe.Subscription | null
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,15 +26,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify webhook signature
-    let event: any
+    let event: Stripe.Event
     try {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       )
-    } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      console.error('Webhook signature verification failed:', message)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
@@ -39,17 +45,23 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-        await SubscriptionService.syncSubscriptionFromStripe(event.data.object)
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        await SubscriptionService.syncSubscriptionFromStripe(subscription)
         break
+      }
 
-      case 'invoice.payment_succeeded':
-        await handlePaymentSucceeded(event.data.object)
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice
+        await handlePaymentSucceeded(invoice)
         break
+      }
 
-      case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object)
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice
+        await handlePaymentFailed(invoice)
         break
+      }
 
       default:
         console.log(`Unhandled event type: ${event.type}`)
@@ -65,18 +77,26 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePaymentSucceeded(invoice: any) {
+async function handlePaymentSucceeded(invoice: InvoiceWithSubscription) {
   // Payment succeeded - ensure subscription is marked as active
-  if (invoice.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
+  const subscriptionId = typeof invoice.subscription === 'string'
+    ? invoice.subscription
+    : invoice.subscription?.id
+
+  if (subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
     await SubscriptionService.syncSubscriptionFromStripe(subscription)
   }
 }
 
-async function handlePaymentFailed(invoice: any) {
+async function handlePaymentFailed(invoice: InvoiceWithSubscription) {
   // Payment failed - mark subscription as past due
-  if (invoice.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(invoice.subscription)
+  const subscriptionId = typeof invoice.subscription === 'string'
+    ? invoice.subscription
+    : invoice.subscription?.id
+
+  if (subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
     const customer = await stripe.customers.retrieve(subscription.customer as string)
 
     // Check if customer is not deleted and has metadata

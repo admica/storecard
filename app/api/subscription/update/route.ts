@@ -29,10 +29,11 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Subscription updated to ${plan} plan`
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Subscription update failed:', error)
+    const message = error instanceof Error ? error.message : 'Failed to update subscription'
     return NextResponse.json(
-      { error: error.message || 'Failed to update subscription' },
+      { error: message },
       { status: 500 }
     )
   }

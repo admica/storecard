@@ -21,7 +21,7 @@ async function extractDominantColorFromUrl(imageUrl: string): Promise<{ colorLig
 
 // POST /api/backfill-colors
 // Updates existing BrandLogo entries and Cards with extracted colors
-export async function POST(request: Request) {
+export async function POST() {
     const session = await auth()
     if (!session?.user?.email) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

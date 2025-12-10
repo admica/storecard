@@ -1,5 +1,23 @@
 import type { NextAuthConfig } from 'next-auth'
+import type { JWT } from 'next-auth/jwt'
+import type { SubscriptionStatus, SubscriptionTier } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+
+type SubscriptionPayload = {
+    tier: SubscriptionTier
+    status: SubscriptionStatus
+    currentPeriodEnd: Date | null
+    isActive: boolean
+    isFree: boolean
+}
+
+type ExtendedToken = JWT & {
+    id?: string
+    emailVerified?: boolean
+    onboardingComplete?: boolean
+    subscriptionSelected?: boolean
+    subscription?: SubscriptionPayload
+}
 
 export const authConfig = {
     pages: {
@@ -9,26 +27,38 @@ export const authConfig = {
         async session({ session, token }) {
             // Use data from JWT token instead of querying database
             // This allows the session callback to run on Edge Runtime
-            if (token && session.user) {
-                session.user.id = token.id as string
-                session.user.emailVerifiedStatus = token.emailVerified as boolean
-                session.user.onboardingComplete = token.onboardingComplete as boolean
-                session.user.subscriptionSelected = token.subscriptionSelected as boolean
+            const typedToken = token as ExtendedToken
 
-                if (token.subscription) {
-                    session.user.subscription = token.subscription as any
+            if (typedToken && session.user) {
+                session.user.id = typedToken.id as string
+                session.user.emailVerifiedStatus = typedToken.emailVerified as boolean
+                session.user.onboardingComplete = typedToken.onboardingComplete as boolean
+                session.user.subscriptionSelected = typedToken.subscriptionSelected as boolean
+
+                if (typedToken.subscription) {
+                    session.user.subscription = typedToken.subscription
                 }
             }
 
             return session
         },
         async jwt({ token, user, trigger }) {
+            const typedToken = token as ExtendedToken
+
             // Add user data to token on sign in
             if (user) {
-                token.id = user.id
-                token.emailVerified = (user as any).emailVerified
-                token.onboardingComplete = (user as any).onboardingComplete
-                token.subscriptionSelected = (user as any).subscriptionSelected
+                const userData = user as {
+                    id?: string
+                    emailVerified?: boolean
+                    onboardingComplete?: boolean
+                    subscriptionSelected?: boolean
+                }
+                if (userData.id) {
+                    typedToken.id = userData.id
+                }
+                typedToken.emailVerified = userData.emailVerified
+                typedToken.onboardingComplete = userData.onboardingComplete
+                typedToken.subscriptionSelected = userData.subscriptionSelected
             }
 
             // Refresh user data from database when needed
@@ -46,10 +76,10 @@ export const authConfig = {
                     })
 
                     if (dbUser) {
-                        token.id = dbUser.id
-                        token.emailVerified = dbUser.emailVerified
-                        token.onboardingComplete = dbUser.onboardingComplete
-                        token.subscriptionSelected = dbUser.subscriptionSelected
+                        typedToken.id = dbUser.id
+                        typedToken.emailVerified = dbUser.emailVerified
+                        typedToken.onboardingComplete = dbUser.onboardingComplete
+                        typedToken.subscriptionSelected = dbUser.subscriptionSelected
 
                         // Add subscription data
                         const subscription = await prisma.subscription.findUnique({
@@ -62,7 +92,7 @@ export const authConfig = {
                         })
 
                         if (subscription) {
-                            token.subscription = {
+                            typedToken.subscription = {
                                 tier: subscription.tier,
                                 status: subscription.status,
                                 currentPeriodEnd: subscription.currentPeriodEnd,
@@ -76,7 +106,7 @@ export const authConfig = {
                 }
             }
 
-            return token
+            return typedToken
         },
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user

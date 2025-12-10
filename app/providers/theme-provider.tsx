@@ -20,24 +20,17 @@ export function ThemeProvider({
     initialTheme?: Theme
 }) {
     const [theme, setThemeState] = useState<Theme>(initialTheme)
-    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        setMounted(true)
-        // Remove no-transitions class after mount to enable smooth transitions
-        document.documentElement.classList.remove('no-transitions')
-    }, [])
-
-    useEffect(() => {
-        if (mounted) {
-            const root = document.documentElement
-            if (theme === 'dark') {
-                root.classList.add('dark')
-            } else {
-                root.classList.remove('dark')
-            }
+        const root = document.documentElement
+        if (theme === 'dark') {
+            root.classList.add('dark')
+        } else {
+            root.classList.remove('dark')
         }
-    }, [theme, mounted])
+        // Remove no-transitions class after mount to enable smooth transitions
+        root.classList.remove('no-transitions')
+    }, [theme])
 
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme)
@@ -45,15 +38,6 @@ export function ThemeProvider({
 
     const toggleTheme = () => {
         setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'))
-    }
-
-    // Prevent flash by not rendering until mounted
-    if (!mounted) {
-        return (
-            <ThemeContext.Provider value={{ theme: initialTheme, setTheme, toggleTheme }}>
-                {children}
-            </ThemeContext.Provider>
-        )
     }
 
     return (

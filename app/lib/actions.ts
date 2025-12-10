@@ -1,6 +1,6 @@
 'use server'
 
-import { signIn, signOut, auth } from '@/auth'
+import { signIn, auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { AuthError } from 'next-auth'
@@ -10,6 +10,18 @@ import { redirect } from 'next/navigation'
 import { put } from '@vercel/blob'
 import { SubscriptionTier } from '@prisma/client'
 import { generateVerificationCode, sendVerificationEmail } from '@/lib/mailgun'
+
+type ClearbitSuggestion = {
+    name: string
+    domain: string
+    logo: string
+}
+
+type LogoDevResult = {
+    name?: string | null
+    domain?: string | null
+    logo_url: string
+}
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
     try {
@@ -375,9 +387,9 @@ export async function searchLogos(query: string) {
     try {
         const response = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(normalizedQuery)}`)
         if (response.ok) {
-            const data = await response.json()
+            const data: ClearbitSuggestion[] = await response.json()
             // data is array of { name: string, domain: string, logo: string }
-            data.forEach((item: any) => {
+            data.forEach((item) => {
                 // Avoid duplicates
                 const isDuplicate = results.some(r => r.url === item.logo)
                 if (!isDuplicate && cachedLogo?.logoUrl !== item.logo) {
@@ -404,16 +416,16 @@ export async function searchLogos(query: string) {
             })
 
             if (response.ok) {
-                const data = await response.json()
+                const data: LogoDevResult[] = await response.json()
                 // data is array of { name: string, domain: string, logo_url: string }
-                data.slice(0, 5).forEach((item: any) => {
+                data.slice(0, 5).forEach((item) => {
                     // Avoid duplicates
                     const isDuplicate = results.some(r => r.url === item.logo_url)
                     if (!isDuplicate && cachedLogo?.logoUrl !== item.logo_url) {
                         results.push({
                             source: 'api',
                             url: item.logo_url,
-                            name: item.name || item.domain
+                            name: item.name || item.domain || ''
                         })
                     }
                 })

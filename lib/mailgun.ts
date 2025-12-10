@@ -107,30 +107,33 @@ StoreCard - Organize your loyalty cards in one place`,
     // If we get here without an error, the email was sent successfully
     console.log('[MAILGUN] Email sent successfully:', result)
     return true
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[MAILGUN] Email sending exception:', error)
     if (error instanceof Error) {
       console.error('[MAILGUN] Error message:', error.message)
       console.error('[MAILGUN] Error stack:', error.stack)
     }
     // Log the full error object if available
-    if (error?.response) {
-      console.error('[MAILGUN] Error response:', JSON.stringify(error.response, null, 2))
-    }
-    if (error?.body) {
-      console.error('[MAILGUN] Error body:', JSON.stringify(error.body, null, 2))
-    }
-    if (error?.status) {
-      console.error('[MAILGUN] Error status:', error.status)
-    }
-    if (error?.statusCode) {
-      console.error('[MAILGUN] Error statusCode:', error.statusCode)
-    }
-    // Try to get the full error as JSON
-    try {
-      console.error('[MAILGUN] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    if (typeof error === 'object' && error) {
+      const errorWithProps = error as { response?: unknown; body?: unknown; status?: unknown; statusCode?: unknown }
+      if (errorWithProps.response) {
+        console.error('[MAILGUN] Error response:', JSON.stringify(errorWithProps.response, null, 2))
+      }
+      if (errorWithProps.body) {
+        console.error('[MAILGUN] Error body:', JSON.stringify(errorWithProps.body, null, 2))
+      }
+      if (errorWithProps.status) {
+        console.error('[MAILGUN] Error status:', errorWithProps.status)
+      }
+      if (errorWithProps.statusCode) {
+        console.error('[MAILGUN] Error statusCode:', errorWithProps.statusCode)
+      }
+      // Try to get the full error as JSON
+      try {
+        console.error('[MAILGUN] Full error object:', JSON.stringify(errorWithProps, Object.getOwnPropertyNames(errorWithProps), 2))
     } catch (e) {
-      console.error('[MAILGUN] Could not stringify error object')
+      console.error('[MAILGUN] Could not stringify error object', e)
+      }
     }
     return false
   }
